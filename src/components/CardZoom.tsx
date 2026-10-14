@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useSyncExternalStore } from "react";
+import { useEffect, useRef, useSyncExternalStore } from "react";
 import { createPortal } from "react-dom";
 import { AnimatePresence, motion, useReducedMotion } from "motion/react";
 import type { Discipline } from "@/lib/content";
@@ -20,6 +20,8 @@ export function CardZoom({
 }) {
   const reduce = useReducedMotion();
   const open = discipline !== null;
+  const closeBtn = useRef<HTMLButtonElement>(null);
+  const opener = useRef<HTMLElement | null>(null);
   const mounted = useSyncExternalStore(
     () => () => {},
     () => true,
@@ -33,9 +35,13 @@ export function CardZoom({
     const html = document.documentElement;
     const prev = html.style.overflow;
     html.style.overflow = "hidden";
+    opener.current = document.activeElement as HTMLElement | null;
+    const id = window.setTimeout(() => closeBtn.current?.focus(), 60);
     return () => {
       window.removeEventListener("keydown", onKey);
       html.style.overflow = prev;
+      window.clearTimeout(id);
+      opener.current?.focus();
     };
   }, [open, onClose]);
 
@@ -84,6 +90,7 @@ export function CardZoom({
           </motion.div>
 
           <button
+            ref={closeBtn}
             type="button"
             onClick={onClose}
             className="relative mt-6 rounded-full border border-edge bg-panel/80 px-5 py-2 text-[17px] text-fg backdrop-blur transition-[border-color,transform] duration-150 ease-out hover:border-faint active:scale-[0.97]"

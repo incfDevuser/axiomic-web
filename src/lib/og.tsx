@@ -12,7 +12,7 @@ const copy = {
   },
   en: {
     title: "Financial infrastructure for AI agents.",
-    line: "We gave an AI agent $1,000 in simulated money. It sent $990 to accounts that don't exist.",
+    line: "We gave an AI agent 1,000,000 CLP in simulated money. It sent 990,000 to accounts that don't exist.",
   },
 };
 

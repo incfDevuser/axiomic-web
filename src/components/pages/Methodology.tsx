@@ -1,6 +1,7 @@
 import { Footer } from "@/components/Footer";
 import { Nav } from "@/components/Nav";
-import { fmt, toLocal, otherLang, routes, type Lang } from "@/lib/i18n";
+import { measurement09, realCase, totals } from "@/lib/evidence";
+import { fmt, otherLang, routes, type Lang } from "@/lib/i18n";
 
 const copy = {
   es: {
@@ -12,9 +13,9 @@ const copy = {
     ),
     lead: "El agente opera en un mundo financiero simulado: banco, proveedores, facturas, correos, fallas de red, fraudes e instrucciones hostiles. Cada episodio se califica y se convierte en una cifra en pesos.",
     numbers: [
-      { v: "430", k: "episodios calificados con DeepSeek, Claude Haiku y Sonnet, y GPT-6 Luna, más 6 mundos compartidos entre agentes" },
-      { v: "423", k: "controles programados y verificados que comprueban que nuestro evaluador detecta lo que dice detectar" },
-      { v: "48", k: "episodios en la medición 09, preregistrada, con tres modelos comerciales" },
+      { v: String(totals.episodes), k: `episodios calificados con ${totals.models.es}, más ${totals.sharedWorlds} mundos compartidos entre agentes` },
+      { v: String(totals.checks), k: "controles programados y verificados que comprueban que nuestro evaluador detecta lo que dice detectar" },
+      { v: String(measurement09.episodes), k: "episodios en la medición 09, preregistrada, con tres modelos comerciales" },
     ],
     sections: [
       {
@@ -35,15 +36,18 @@ const copy = {
       },
     ],
     riskTitle: "Cómo calculamos el riesgo por millón",
-    riskBody: "Sumamos lo que el agente habría perdido en todos los episodios y lo dividimos por el total que le delegamos. Caso medido, con dinero simulado: en la medición 09, un episodio perdió 990.000 CLP de 16 episodios con 1.000.000 CLP cada uno.",
+    riskBody: `Sumamos lo que el agente habría perdido en todos los episodios y lo dividimos por el total que le delegamos. Caso medido, con dinero simulado: en la medición 09, ${realCase.model} con ${realCase.profile.es} perdió 990.000 CLP en 1 de 8 episodios, con 3.800.000 CLP delegados en total.`,
     perMillion: "CLP por millón",
+    tableTitle: "Medición 09 · cuentas por pagar · 48 episodios, preregistrada",
+    tableHead: ["Modelo", "Perfil", "Episodios", "Delegado (CLP)", "Pérdida auditada (CLP)", "Por millón"],
+    tableNote: "La calificación automática asignó pérdidas a Claude Haiku 5.5 y GPT-6 Luna; la auditoría mostró que eran una ambigüedad de nuestro evaluador y la pérdida real es 0. DeepSeek tuvo 2 episodios fallidos de 16: uno con pérdida y uno sin pérdida.",
     disciplinesTitle: "Disciplinas de prueba",
     disciplines: [
       "Transferencias",
       "Incidentes de pago: cobros duplicados y devoluciones",
       "Pagos asíncronos con instrucciones hostiles inyectadas",
       "Dinero compartido entre dos agentes",
-      "Cuentas por pagar con presupuesto delegado de 100.000 a 1.000.000 CLP",
+      "Cuentas por pagar con presupuesto delegado de 100.000 a 1.000.000 CLP simulados",
     ],
     notTitle: "Lo que no afirmamos",
     notBody:
@@ -58,9 +62,9 @@ const copy = {
     ),
     lead: "The agent operates in a simulated financial world: bank, suppliers, invoices, emails, network failures, fraud and hostile instructions. Every episode is graded and turned into a figure in pesos.",
     numbers: [
-      { v: "430", k: "episodes graded across DeepSeek, Claude Haiku and Sonnet, and GPT-6 Luna, plus 6 worlds shared between agents" },
-      { v: "423", k: "automated, verified checks that prove our grader catches what it claims to catch" },
-      { v: "48", k: "episodes in measurement 09, pre-registered, across three commercial models" },
+      { v: String(totals.episodes), k: `episodes graded across ${totals.models.en}, plus ${totals.sharedWorlds} worlds shared between agents` },
+      { v: String(totals.checks), k: "automated, verified checks that prove our grader catches what it claims to catch" },
+      { v: String(measurement09.episodes), k: "episodes in measurement 09, pre-registered, across three commercial models" },
     ],
     sections: [
       {
@@ -81,15 +85,18 @@ const copy = {
       },
     ],
     riskTitle: "How we compute risk per million",
-    riskBody: "We add up what the agent would have lost across all episodes and divide it by the total we delegated. Measured case, with simulated money: in measurement 09, one episode lost $990 out of 16 episodes of $1,000 each.",
-    perMillion: "USD per million",
+    riskBody: `We add up what the agent would have lost across all episodes and divide it by the total we delegated. Measured case, with simulated money: in measurement 09, ${realCase.model} with the ${realCase.profile.en} lost 990,000 CLP in 1 of 8 episodes, with 3,800,000 CLP delegated in total.`,
+    perMillion: "CLP per million",
+    tableTitle: "Measurement 09 · accounts payable · 48 episodes, pre-registered",
+    tableHead: ["Model", "Profile", "Episodes", "Delegated (CLP)", "Audited loss (CLP)", "Per million"],
+    tableNote: "Automatic grading assigned losses to Claude Haiku 5.5 and GPT-6 Luna; the audit showed they came from an ambiguity in our grader and the real loss is 0. DeepSeek had 2 failed episodes out of 16: one with a loss and one without.",
     disciplinesTitle: "Test disciplines",
     disciplines: [
       "Transfers",
       "Payment incidents: duplicate charges and refunds",
       "Async payments with injected hostile instructions",
       "Money shared between two agents",
-      "Accounts payable with a delegated budget of $100 to $1,000",
+      "Accounts payable with a delegated budget of 100,000 to 1,000,000 CLP (simulated)",
     ],
     notTitle: "What we don't claim",
     notBody:
@@ -127,8 +134,33 @@ export function Methodology({ lang }: { lang: Lang }) {
           <Block title={t.riskTitle}>
             <p className="mt-3 max-w-2xl pl-7 text-[18px] leading-[1.65] text-muted">{t.riskBody}</p>
             <p className="mt-5 pl-7 font-mono text-[17px] text-fg">
-              {f(toLocal(lang, 990000))} ÷ (16 × {f(toLocal(lang, 1000000))}) × {f(1000000)} = <span className="text-accent">{f(61875)} {t.perMillion}</span>
+              {f(realCase.loss)} ÷ {f(realCase.delegated)} × {f(1000000)} = <span className="text-accent">{f(realCase.perMillion)} {t.perMillion}</span>
             </p>
+            <p className="mt-8 pl-7 text-[15px] font-semibold text-fg">{t.tableTitle}</p>
+            <div className="mt-3 overflow-x-auto pl-7">
+              <table className="w-full min-w-[640px] text-left text-[15px]">
+                <thead>
+                  <tr className="text-[13px] text-faint">
+                    {t.tableHead.map((h, i) => (
+                      <th key={h} className={`pb-2 font-semibold ${i >= 2 ? "text-right" : ""}`}>{h}</th>
+                    ))}
+                  </tr>
+                </thead>
+                <tbody>
+                  {measurement09.rows.map((r) => (
+                    <tr key={`${r.model}-${r.profile}`} className="border-t border-edge">
+                      <td className="py-2.5 pr-3 font-medium text-fg">{r.model}</td>
+                      <td className="py-2.5 pr-3 text-muted">{profile(lang, r.profile)}</td>
+                      <td className="py-2.5 pr-3 text-right tabular-nums text-muted">{r.episodes}</td>
+                      <td className="py-2.5 pr-3 text-right tabular-nums text-muted">{f(r.delegated)}</td>
+                      <td className={`py-2.5 pr-3 text-right tabular-nums ${r.loss ? "font-semibold text-danger" : "text-muted"}`}>{f(r.loss)}</td>
+                      <td className={`py-2.5 text-right tabular-nums ${r.perMillion ? "font-semibold text-fg" : "text-muted"}`}>{f(r.perMillion)}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+            <p className="mt-3 max-w-2xl pl-7 text-[14px] leading-[1.6] text-faint">{t.tableNote}</p>
           </Block>
 
           <Block title={t.disciplinesTitle}>
@@ -148,6 +180,8 @@ export function Methodology({ lang }: { lang: Lang }) {
     </>
   );
 }
+
+const profile = (lang: Lang, p: string) => (lang === "es" ? { soporte: "soporte", estricto: "estricto", ambos: "ambos" }[p] : { soporte: "support", estricto: "strict", ambos: "both" }[p]) ?? p;
 
 function Block({ title, children }: { title: string; children: React.ReactNode }) {
   return (

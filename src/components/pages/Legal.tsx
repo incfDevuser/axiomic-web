@@ -14,22 +14,14 @@ const privacy: Record<Lang, Doc> = {
     lead: "Pedimos lo mínimo para responderte. No vendemos datos y no usamos cookies de seguimiento ni publicidad.",
     updated: UPDATED.es,
     sections: [
-      { title: "Quiénes somos", body: `Axiomic, con base en Santiago, Chile. Para cualquier consulta sobre tus datos escríbenos a ${contactEmail}.` },
-      {
-        title: "Qué recogemos",
-        body: "Si nos escribes por el formulario: tu nombre, empresa, correo y el flujo que quieres probar. Nuestro proveedor de hosting registra datos técnicos (como dirección IP y navegador) para operar y proteger el sitio.",
-      },
-      { title: "Para qué", body: "Para responder tu solicitud y coordinar un piloto. No usamos tus datos para publicidad ni se los vendemos a nadie." },
-      { title: "Con quién los compartimos", body: "Solo con los proveedores que nos ayudan a operar el sitio y enviar correos, y únicamente para esos fines." },
-      {
-        title: "Durante un piloto",
-        body: "No pedimos credenciales de producción ni datos reales de tus clientes. Los escenarios usan datos sintéticos. Lo que compartas para configurar la prueba se rige por el acuerdo del piloto.",
-      },
-      { title: "Cuánto tiempo", body: "Mientras tengamos una conversación comercial activa, o hasta que nos pidas borrarlos." },
-      {
-        title: "Tus derechos",
-        body: `Conforme a la Ley 19.628 sobre protección de la vida privada, puedes pedir acceso, rectificación, cancelación u oposición al uso de tus datos escribiendo a ${contactEmail}.`,
-      },
+      { title: "Responsable", body: `Axiomic, con base en Santiago, Chile. Cuando la sociedad esté constituida, actualizaremos este punto con su razón social y RUT. Para cualquier consulta sobre tus datos escríbenos a ${contactEmail}.` },
+      { title: "Qué recogemos", body: "Si nos escribes por el formulario: tu nombre, empresa, correo y el flujo que quieres probar. Nuestro proveedor de hosting registra datos técnicos (como dirección IP y navegador) para operar y proteger el sitio, y usamos la dirección IP para limitar envíos repetidos del formulario." },
+      { title: "Para qué y con qué base", body: "Para responder tu solicitud y coordinar un piloto. La base es tu consentimiento, que entregas al enviar el formulario, y nuestro interés legítimo en operar y proteger el sitio. No usamos tus datos para publicidad ni se los vendemos a nadie." },
+      { title: "Con quién los compartimos", body: "Solo con los proveedores que nos ayudan a operar el sitio y enviar correos, y únicamente para esos fines: el proveedor de hosting del sitio y Resend, que entrega el correo del formulario." },
+      { title: "Transferencias internacionales", body: "Esos proveedores procesan datos en servidores fuera de Chile, principalmente en Estados Unidos. Lo hacen bajo contrato, con obligaciones de confidencialidad y seguridad, y solo para prestarnos el servicio." },
+      { title: "Durante un piloto", body: "No pedimos credenciales de producción ni datos reales de tus clientes. Los escenarios usan datos sintéticos. Lo que compartas para configurar la prueba se rige por el acuerdo del piloto." },
+      { title: "Cuánto tiempo", body: "Conservamos los datos del formulario mientras tengamos una conversación comercial activa y hasta 24 meses después del último contacto, o antes si nos pides borrarlos. Los registros técnicos del hosting se conservan según la política de ese proveedor." },
+      { title: "Tus derechos", body: `Conforme a la Ley 19.628 y, desde el 1 de diciembre de 2026, a la Ley 21.719 que la modifica, puedes pedir acceso, rectificación, supresión, oposición y portabilidad de tus datos, y revocar tu consentimiento, escribiendo a ${contactEmail}. Respondemos dentro de los plazos legales. También puedes reclamar ante la Agencia de Protección de Datos Personales cuando entre en funciones.` },
     ],
   },
   en: {
@@ -38,22 +30,14 @@ const privacy: Record<Lang, Doc> = {
     lead: "We ask for the minimum needed to get back to you. We don't sell data and we don't use tracking or advertising cookies.",
     updated: UPDATED.en,
     sections: [
-      { title: "Who we are", body: `Axiomic, based in Santiago, Chile. For any question about your data, email ${contactEmail}.` },
-      {
-        title: "What we collect",
-        body: "If you write to us through the form: your name, company, email and the flow you want to test. Our hosting provider logs technical data (such as IP address and browser) to run and protect the site.",
-      },
-      { title: "What for", body: "To answer your request and set up a pilot. We don't use your data for advertising and we don't sell it to anyone." },
-      { title: "Who we share it with", body: "Only with the providers that help us run the site and send email, and only for those purposes." },
-      {
-        title: "During a pilot",
-        body: "We never ask for production credentials or real customer data. Scenarios use synthetic data. Anything you share to configure the test is covered by the pilot agreement.",
-      },
-      { title: "How long", body: "For as long as we have an active business conversation, or until you ask us to delete it." },
-      {
-        title: "Your rights",
-        body: `Under Chile's Law 19.628 on the protection of private life, you can request access to, correction or deletion of your data, or object to its use, by emailing ${contactEmail}.`,
-      },
+      { title: "Who is responsible", body: `Axiomic, based in Santiago, Chile. Once the company is incorporated we will update this section with its legal name and tax ID. For any question about your data, email ${contactEmail}.` },
+      { title: "What we collect", body: "If you write to us through the form: your name, company, email and the flow you want to test. Our hosting provider logs technical data (such as IP address and browser) to run and protect the site, and we use the IP address to limit repeated form submissions." },
+      { title: "What for, and on what basis", body: "To answer your request and set up a pilot. The basis is your consent, given when you submit the form, and our legitimate interest in running and protecting the site. We don't use your data for advertising and we don't sell it to anyone." },
+      { title: "Who we share it with", body: "Only with the providers that help us run the site and send email, and only for those purposes: the site's hosting provider and Resend, which delivers the form email." },
+      { title: "International transfers", body: "Those providers process data on servers outside Chile, mainly in the United States. They do so under contract, with confidentiality and security obligations, and only to provide the service to us." },
+      { title: "During a pilot", body: "We never ask for production credentials or real customer data. Scenarios use synthetic data. Anything you share to configure the test is covered by the pilot agreement." },
+      { title: "How long", body: "We keep form data while we have an active business conversation and for up to 24 months after the last contact, or sooner if you ask us to delete it. Hosting logs are kept according to that provider's policy." },
+      { title: "Your rights", body: `Under Chile's Law 19.628 and, from December 1, 2026, Law 21.719 which amends it, you can request access to, correction, deletion or portability of your data, object to its use, and withdraw your consent by emailing ${contactEmail}. We reply within the legal deadlines. You can also file a complaint with Chile's Personal Data Protection Agency once it is operating.` },
     ],
   },
 };
