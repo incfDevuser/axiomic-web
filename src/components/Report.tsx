@@ -126,11 +126,7 @@ export function Report({ lang }: { lang: Lang }) {
       <div className="relative mx-auto max-w-[1400px] px-6 lg:px-14">
         <div className="grid grid-cols-1 gap-8 lg:grid-cols-12 lg:items-end">
           <div className="min-w-0 lg:col-span-7">
-            <p className="inline-flex items-center gap-2.5 rounded-full border border-white/10 bg-white/[0.03] px-4 py-1.5 text-[14px] font-medium text-muted shadow-[inset_0_1px_0_rgba(255,255,255,0.06)] backdrop-blur-md">
-              <span className="h-1.5 w-1.5 rounded-full bg-white/60" />
-              {t.eyebrow}
-            </p>
-            <h2 className="hero-ink mt-5 text-[36px] leading-[1.06] font-semibold tracking-[-0.045em] text-balance sm:text-[52px]">{t.title}</h2>
+            <h2 className="hero-ink text-[36px] leading-[1.06] font-semibold tracking-[-0.045em] text-balance sm:text-[52px]">{t.title}</h2>
             <p className="mt-5 max-w-[560px] text-[18px] leading-[1.5] text-muted">{t.lead}</p>
           </div>
           <div className="flex flex-wrap gap-3 lg:col-span-5 lg:justify-end">

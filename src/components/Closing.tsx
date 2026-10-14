@@ -102,11 +102,7 @@ export function Closing({ lang }: { lang: Lang }) {
           transition={{ duration: 0.8, ease }}
           className="lg:col-span-5"
         >
-          <p className="inline-flex items-center gap-2.5 rounded-full border border-white/10 bg-white/[0.03] px-4 py-1.5 text-[14px] font-medium text-muted shadow-[inset_0_1px_0_rgba(255,255,255,0.06)] backdrop-blur-md">
-            <span className="hero-badge-dot h-1.5 w-1.5 rounded-full bg-sky" />
-            {t.eyebrow}
-          </p>
-          <h2 className="hero-ink mt-5 text-[40px] leading-[1.02] font-semibold tracking-[-0.045em] text-balance sm:text-[60px]">{t.title}</h2>
+          <h2 className="hero-ink text-[40px] leading-[1.02] font-semibold tracking-[-0.045em] text-balance sm:text-[60px]">{t.title}</h2>
           <p className="mt-5 max-w-md text-[19px] leading-[1.6] text-muted">{m.lead}</p>
         </motion.div>
 

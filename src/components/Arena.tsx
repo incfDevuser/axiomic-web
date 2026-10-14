@@ -238,12 +238,10 @@ function Verdict({ d, t, count, report, lang }: { d: Discipline; t: T; count: nu
         </span>
       </span>
 
-      <div className="mt-4 flex gap-2">
-        <span className="rounded-full px-3 py-1 text-[14px] font-semibold text-white/30 ring-1 ring-white/10">✓ {t.pass}</span>
+      <div className="mt-4 flex gap-5">
+        <span className="text-[15px] font-semibold text-white/30">✓ {t.pass}</span>
         <span
-          className={`rounded-full px-3 py-1 text-[14px] font-semibold ring-1 transition-[background-color,box-shadow,color] duration-500 ${
-            done ? "bg-white/[0.1] text-white shadow-[0_0_24px_rgba(255,255,255,0.25)] ring-white/70" : "text-white/30 ring-white/10"
-          }`}
+          className={`text-[15px] font-semibold transition-[color,text-shadow] duration-500 ${done ? "text-white [text-shadow:0_0_16px_rgba(255,255,255,0.6)]" : "text-white/30"}`}
         >
           ✕ {t.fail}
         </span>
@@ -345,14 +343,10 @@ export function Arena() {
         <div aria-hidden className="pointer-events-none absolute top-[58%] left-1/2 h-[520px] w-[1100px] max-w-[110vw] -translate-x-1/2 -translate-y-1/2 rounded-full bg-[radial-gradient(closest-side,rgba(61,123,255,0.09),transparent)] blur-2xl" />
         <div className="relative mx-auto w-full max-w-[1400px] px-6 lg:px-14">
           <div className="text-center">
-            <p className="inline-flex items-center gap-2.5 rounded-full border border-white/10 bg-white/[0.03] px-4 py-1.5 text-[14px] font-medium text-muted shadow-[inset_0_1px_0_rgba(255,255,255,0.06)] backdrop-blur-md">
-              <span className="h-1.5 w-1.5 rounded-full bg-accent shadow-[0_0_10px_rgba(61,123,255,0.9)]" />
-              {t.eyebrow}
-            </p>
-            <h2 className="hero-ink mt-4 text-[36px] leading-[1.08] font-semibold tracking-[-0.045em] sm:text-[48px]">{t.title}</h2>
+            <h2 className="hero-ink text-[36px] leading-[1.08] font-semibold tracking-[-0.045em] sm:text-[48px]">{t.title}</h2>
           </div>
 
-          <div className="mt-6 flex flex-wrap justify-center gap-2 sm:gap-2.5">
+          <div className="mt-6 flex flex-wrap justify-center gap-x-6 gap-y-1 sm:gap-x-8">
             {disciplines.map((d) => {
               const on = d.id === current.id;
               return (
@@ -361,14 +355,13 @@ export function Arena() {
                   type="button"
                   onClick={() => choose(d.id)}
                   aria-pressed={on}
-                  className={`flex shrink-0 items-center gap-2.5 rounded-full border py-1.5 pr-4 pl-3 transition-[border-color,background-color,transform] duration-200 ease-out active:scale-[0.97] sm:gap-3 sm:py-2 sm:pr-5 sm:pl-4 ${
-                    on ? "border-white/25 bg-white/[0.08] shadow-[inset_0_1px_0_rgba(255,255,255,0.1)]" : "border-white/10 bg-white/[0.025] hover:border-white/20"
-                  }`}
+                  className={`relative flex shrink-0 items-center gap-2.5 py-2 transition-[opacity,transform] duration-200 ease-out active:scale-[0.97] sm:gap-3 ${on ? "opacity-100" : "opacity-55 hover:opacity-90"}`}
                 >
                   <span className="w-[18px] shrink-0">
                     <AgentCard discipline={d} lang={lang} sandbox />
                   </span>
                   <span className={`text-[14px] font-semibold whitespace-nowrap sm:text-[15px] ${on ? "text-fg" : "text-muted"}`}>{d.name}</span>
+                  {on && <span aria-hidden className="absolute inset-x-0 -bottom-0.5 h-px bg-white shadow-[0_0_8px_rgba(255,255,255,0.8)]" />}
                 </button>
               );
             })}

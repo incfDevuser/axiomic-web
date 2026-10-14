@@ -133,11 +133,7 @@ export function Stack({ lang }: { lang: Lang }) {
       <div aria-hidden className="pointer-events-none absolute top-[55%] left-1/2 h-[480px] w-[900px] max-w-[110vw] -translate-x-1/2 -translate-y-1/2 rounded-full bg-[radial-gradient(closest-side,rgba(61,123,255,0.1),transparent)] blur-2xl" />
       <div className="relative mx-auto w-full max-w-[1400px] px-6 lg:px-14">
         <div className="text-center">
-          <p className="inline-flex items-center gap-2.5 rounded-full border border-white/10 bg-white/[0.03] px-4 py-1.5 text-[14px] font-medium text-muted shadow-[inset_0_1px_0_rgba(255,255,255,0.06)] backdrop-blur-md">
-            <span className="h-1.5 w-1.5 rounded-full bg-accent shadow-[0_0_10px_rgba(61,123,255,0.9)]" />
-            {t.eyebrow}
-          </p>
-          <h2 className="hero-ink mt-5 text-[36px] leading-[1.08] font-semibold tracking-[-0.045em] sm:text-[52px]">{t.title}</h2>
+          <h2 className="hero-ink text-[36px] leading-[1.08] font-semibold tracking-[-0.045em] sm:text-[52px]">{t.title}</h2>
         </div>
 
         <div className="relative mx-auto mt-16 max-w-[1100px]">

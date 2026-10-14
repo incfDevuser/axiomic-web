@@ -280,11 +280,7 @@ function SealStage({ t }: { t: T }) {
         <SpotlightGrid gridRef={spot.grid} />
         <div className="relative mx-auto w-full max-w-[1400px] px-6 lg:px-14">
           <div className="max-w-4xl">
-            <p className="inline-flex items-center gap-2.5 rounded-full border border-white/10 bg-white/[0.03] px-4 py-1.5 text-[14px] font-medium text-muted shadow-[inset_0_1px_0_rgba(255,255,255,0.06)] backdrop-blur-md">
-              <span className="h-1.5 w-1.5 rounded-full bg-white/60" />
-              {t.stamp.eyebrow}
-            </p>
-            <h3 className="hero-ink mt-5 text-[30px] leading-[1.1] font-semibold tracking-[-0.04em] text-balance sm:text-[44px]">{t.stamp.title}</h3>
+            <h3 className="hero-ink text-[30px] leading-[1.1] font-semibold tracking-[-0.04em] text-balance sm:text-[44px]">{t.stamp.title}</h3>
           </div>
 
           {pin ? (
@@ -316,8 +312,8 @@ function SealStage({ t }: { t: T }) {
                 <AnimatePresence mode="wait">
                   <motion.div key={hold} initial={{ opacity: 0, y: 24 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -16 }} transition={{ duration: 0.45, ease }}>
                     <p className="flex items-center gap-2 text-[15px] font-semibold text-white/70">
-                      <span className="rounded-full border border-white/15 bg-white/[0.05] px-2.5 py-0.5 text-[13px] text-white">
-                        {t.stamp.level} {hold + 1}
+                      <span className="text-white">
+                        {t.stamp.level} {hold + 1} ·
                       </span>
                       {tiers[hold].tag}
                     </p>
@@ -355,8 +351,8 @@ function SealStage({ t }: { t: T }) {
                 >
                   <TierSeal theme={x.theme} name={x.name} i={i} still />
                   <p className="mt-6 flex items-center gap-2 text-[14px] font-semibold text-white/70">
-                    <span className="rounded-full border border-white/15 bg-white/[0.05] px-2 py-0.5 text-[12px] text-white">
-                      {t.stamp.level} {i + 1}
+                    <span className="text-white">
+                      {t.stamp.level} {i + 1} ·
                     </span>
                     {x.tag}
                   </p>
@@ -392,11 +388,7 @@ export function Pilot({ lang }: { lang: Lang }) {
       <div className="pointer-events-none absolute top-1/2 left-[28%] h-[520px] w-[720px] -translate-x-1/2 -translate-y-1/2 rounded-full bg-accent/[0.1] blur-[120px]" />
 
       <div className="relative mx-auto max-w-[1400px] px-6 lg:px-14">
-        <p className="inline-flex items-center gap-2.5 rounded-full border border-white/10 bg-white/[0.03] px-4 py-1.5 text-[14px] font-medium text-muted shadow-[inset_0_1px_0_rgba(255,255,255,0.06)] backdrop-blur-md">
-          <span className="h-1.5 w-1.5 rounded-full bg-accent shadow-[0_0_10px_rgba(61,123,255,0.9)]" />
-          {t.eyebrow}
-        </p>
-        <h2 className="hero-ink mt-5 max-w-4xl text-[36px] leading-[1.06] font-semibold tracking-[-0.045em] text-balance sm:text-[56px] lg:text-[64px]">{t.title}</h2>
+        <h2 className="hero-ink max-w-4xl text-[36px] leading-[1.06] font-semibold tracking-[-0.045em] text-balance sm:text-[56px] lg:text-[64px]">{t.title}</h2>
 
         <div className="mt-16 grid grid-cols-1 items-center gap-16 lg:grid-cols-12 lg:gap-14">
           <div className="relative lg:col-span-7">

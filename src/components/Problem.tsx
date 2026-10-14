@@ -216,7 +216,7 @@ export function Problem({ lang }: { lang: Lang }) {
               <span className="text-[15px] leading-none text-faint" aria-hidden>
                 +
               </span>
-              <span className="ml-auto hidden rounded-full bg-white/[0.05] px-2.5 py-0.5 font-sans text-[13px] text-muted ring-1 ring-white/10 sm:inline">{t.simulated}</span>
+              <span className="ml-auto hidden font-sans text-[13px] text-white/40 sm:inline">{t.simulated}</span>
             </div>
 
             <div className="relative flex h-[440px] flex-col justify-end overflow-hidden sm:h-[500px]">
@@ -262,11 +262,7 @@ export function Problem({ lang }: { lang: Lang }) {
 
         <div className="mt-14 grid grid-cols-1 gap-8 sm:mt-16 lg:grid-cols-12 lg:items-end lg:gap-14">
           <div className="min-w-0 lg:col-span-8">
-            <p className="inline-flex items-center gap-2.5 rounded-full border border-white/10 bg-white/[0.03] px-4 py-1.5 text-[14px] font-medium text-muted shadow-[inset_0_1px_0_rgba(255,255,255,0.06)] backdrop-blur-md">
-              <span className="h-1.5 w-1.5 rounded-full bg-white/60" />
-              {t.eyebrow}
-            </p>
-            <h2 className="hero-ink mt-5 text-[38px] leading-[1.06] font-semibold tracking-[-0.045em] text-balance sm:text-[56px]">{t.title}</h2>
+            <h2 className="hero-ink text-[38px] leading-[1.06] font-semibold tracking-[-0.045em] text-balance sm:text-[56px]">{t.title}</h2>
           </div>
           <div className="min-w-0 lg:col-span-4">
             <p className="text-[14px] leading-[1.6] text-faint">{t.note}</p>
@@ -275,7 +271,7 @@ export function Problem({ lang }: { lang: Lang }) {
                 type="button"
                 onClick={replay}
                 disabled={!done}
-                className="mt-4 rounded-full border border-white/10 bg-white/[0.04] px-4 py-1.5 text-[14px] text-muted transition-[opacity,background-color,color] duration-300 hover:bg-white/[0.08] hover:text-fg disabled:pointer-events-none disabled:opacity-0"
+                className="mt-4 text-[14px] text-muted underline-offset-4 transition-[opacity,color] duration-300 hover:text-fg hover:underline disabled:pointer-events-none disabled:opacity-0"
               >
                 ↻ {t.replay}
               </button>

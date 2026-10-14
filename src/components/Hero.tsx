@@ -113,16 +113,9 @@ export function Hero() {
       <div className="relative pt-32 pb-12 sm:pt-40 sm:pb-16">
 
       <motion.div style={{ y: textY, opacity: textOpacity }} className="relative mx-auto flex max-w-6xl flex-col items-center px-6 text-center">
-        <span
-          style={rise("0s")}
-          className={`${riseClass} inline-flex max-w-[280px] items-center gap-2.5 rounded-[20px] border border-white/10 text-left text-balance sm:max-w-none sm:rounded-full bg-white/[0.03] px-4 py-1.5 text-[14px] text-muted shadow-[inset_0_1px_0_rgba(255,255,255,0.06)] backdrop-blur-md`}
-        >
-          <span className="hero-badge-dot h-1.5 w-1.5 shrink-0 rounded-full bg-sky" />
-          {t.badge}
-        </span>
         <h1
           style={rise("0.08s")}
-          className={`${riseClass} hero-ink mt-7 text-[44px] leading-[1.02] font-semibold tracking-[-0.05em] text-balance sm:text-[56px] lg:text-[66px] xl:text-[72px]`}
+          className={`${riseClass} hero-ink text-[44px] leading-[1.02] font-semibold tracking-[-0.05em] text-balance sm:text-[56px] lg:text-[66px] xl:text-[72px]`}
         >
           {t.title}
         </h1>

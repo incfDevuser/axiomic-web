@@ -1,0 +1,749 @@
+<!DOCTYPE html>
+<html lang="es">
+  <head><script data-hf-gsap-fallback>
+(function(){
+  var cdnBase="https://cdn.jsdelivr.net/npm/gsap@3.15.0/dist/";
+  var loaded={};
+  function loadFallback(file){
+    if(loaded[file])return loaded[file];
+    return loaded[file]=new Promise(function(ok,fail){
+      var s=document.createElement("script");
+      s.src=cdnBase+file;s.hfGsapFallback=true;s.onload=ok;s.onerror=fail;
+      document.head.appendChild(s);
+    });
+  }
+  document.addEventListener("error",function(e){
+    var t=e.target;
+    if(!t||t.tagName!=="SCRIPT"||!t.src||t.hfGsapFallback)return;
+    var m=t.src.match(/gsap[^/]*\/dist\/(.+\.js)/);
+    if(m)loadFallback(m[1]).catch(function(){
+      reportError(new Error("GSAP could not load from "+t.src+" or "+cdnBase+m[1]+", so this preview's animations will not play."));
+    });
+  },true);
+})();
+</script>
+<meta name="hyperframes-studio-preview"><script>(function(){var seen=window.__hfPreviewErrors=[];
+addEventListener("error",function(e){seen.push(e.message||String(e))});})();</script>
+<base href="/api/projects/sandbox-3d/preview/"><style data-hyperframes-text-rendering="true">html,body,*{text-rendering:geometricPrecision}</style><script data-hf-after-fonts-fallback="">document.addEventListener("DOMContentLoaded", function () {
+  if (window.__hfAfterFontsClaimed) return;
+  var T = "text/hf-after-fonts";
+  var all = [].slice.call(document.querySelectorAll('script[type="text/hf-after-fonts"], script[type="text/hf-after-fonts+module"]'));
+  if (!all.length) return;
+  console.warn("[hyperframes] the runtime has no web-font gate; composition scripts run without waiting for fonts");
+  var late = function (el) { return el.type !== T || el.matches('[defer][src], [defer][data-hf-inlined-src]'); };
+  var queue = all.filter(function (el) { return !late(el); }).concat(all.filter(late));
+  (function next() {
+    var el = queue.shift();
+    if (!el) return;
+    var s = document.createElement("script");
+    for (var i = 0; i < el.attributes.length; i++) s.setAttribute(el.attributes[i].name, el.attributes[i].value);
+    if (el.type === T) s.removeAttribute("type"); else s.type = "module";
+    s.async = el.hasAttribute("async");
+    s.text = el.text;
+    var waits = s.type !== "module" && s.hasAttribute("src") && !s.async && !s.noModule;
+    if (waits) { s.addEventListener("load", next); s.addEventListener("error", next); }
+    el.replaceWith(s);
+    if (!waits) next();
+  })();
+});
+//# sourceURL=hyperframes://after-fonts-fallback</script>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=1920, height=1080">
+    <title>Axiomic · La caja de cristal</title>
+    <script src="https://cdn.jsdelivr.net/npm/gsap@3.14.2/dist/gsap.min.js"></script>
+    <script type="importmap">
+      {
+        "imports": {
+          "three": "https://cdn.jsdelivr.net/npm/three@0.181.2/build/three.module.js",
+          "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.181.2/examples/jsm/"
+        }
+      }
+    </script>
+    <style>
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+      html,
+      body {
+        width: 1920px;
+        height: 1080px;
+        overflow: hidden;
+        background: #05070e;
+      }
+      #root {
+        position: relative;
+        width: 100%;
+        height: 100%;
+        overflow: hidden;
+        background: #05070e;
+      }
+      #stage {
+        position: absolute;
+        inset: 0;
+      }
+      #three-layer {
+        width: 100%;
+        height: 100%;
+        display: block;
+      }
+      #vignette {
+        position: absolute;
+        inset: 0;
+        pointer-events: none;
+        background: radial-gradient(ellipse 75% 70% at 50% 50%, transparent 55%, rgba(3, 4, 9, 0.85) 100%);
+      }
+      #fade {
+        position: absolute;
+        inset: 0;
+        pointer-events: none;
+        background: #05070e;
+        opacity: 1;
+      }
+    </style>
+  
+<script data-hyperframes-preview-runtime="1" src="/api/runtime.js"></script>
+<meta name="hyperframes-project-signature" content="865b789742ede9c5424a0a80">
+</head>
+  <body>
+    <div data-hf-id="hf-dcwt" id="root" data-composition-id="main" data-start="0" data-duration="18" data-width="1920" data-height="1080">
+      <div data-hf-id="hf-3psb" id="stage" class="clip" data-start="0" data-duration="18" data-track-index="0">
+        <canvas data-hf-id="hf-odnl" id="three-layer" width="1920" height="1080" data-layout-allow-overflow=""></canvas>
+        <div data-hf-id="hf-h7i3" id="vignette"></div>
+        <div data-hf-id="hf-128z" id="fade"></div>
+      </div>
+    </div>
+
+    
+
+    <script type="text/hf-after-fonts">const tl = gsap.timeline({ paused: true });
+tl.set({}, {}, 18);
+window.__timelines["main"] = tl;</script><script type="text/hf-after-fonts+module">
+      import * as THREE from "three";
+      import { EffectComposer } from "three/addons/postprocessing/EffectComposer.js";
+      import { RenderPass } from "three/addons/postprocessing/RenderPass.js";
+      import { UnrealBloomPass } from "three/addons/postprocessing/UnrealBloomPass.js";
+      import { OutputPass } from "three/addons/postprocessing/OutputPass.js";
+      import { mergeGeometries } from "three/addons/utils/BufferGeometryUtils.js";
+
+      // ---------- helpers ----------
+      const W = 1920;
+      const H = 1080;
+      const clamp = (v, a = 0, b = 1) => Math.min(Math.max(v, a), b);
+      const lerp = (a, b, k) => a + (b - a) * k;
+      const span = (t, a, b) => clamp((t - a) / (b - a));
+      const smooth = (k) => k * k * (3 - 2 * k);
+      const easeInOut = (k) => (k < 0.5 ? 4 * k * k * k : 1 - Math.pow(-2 * k + 2, 3) / 2);
+      const easeOut = (k) => 1 - Math.pow(1 - k, 3);
+      const expoOut = (k) => (k === 1 ? 1 : 1 - Math.pow(2, -10 * k));
+      function mulberry32(a) {
+        return function () {
+          a |= 0;
+          a = (a + 0x6d2b79f5) | 0;
+          let t = Math.imul(a ^ (a >>> 15), 1 | a);
+          t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
+          return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+        };
+      }
+      const rand = mulberry32(90909);
+
+      const C = {
+        bg: 0x05070e,
+        graphite: 0x0f1626,
+        graphiteHi: 0x1a2336,
+        white: 0xf4f7fc,
+        edge: 0xdfe7f5,
+        blue: 0x3d7bff,
+      };
+
+      // ---------- renderer ----------
+      const canvas = document.getElementById("three-layer");
+      const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, preserveDrawingBuffer: true });
+      renderer.setPixelRatio(1);
+      renderer.setSize(W, H, false);
+      renderer.toneMapping = THREE.ACESFilmicToneMapping;
+      renderer.toneMappingExposure = 1.05;
+      renderer.outputColorSpace = THREE.SRGBColorSpace;
+
+      const scene = new THREE.Scene();
+      scene.background = new THREE.Color(C.bg);
+      scene.fog = new THREE.FogExp2(C.bg, 0.0);
+
+      const camera = new THREE.PerspectiveCamera(32, W / H, 0.1, 900);
+
+      const composer = new EffectComposer(renderer);
+      composer.setPixelRatio(1);
+      composer.setSize(W, H);
+      composer.addPass(new RenderPass(scene, camera));
+      const bloom = new UnrealBloomPass(new THREE.Vector2(W, H), 0.85, 0.55, 0.22);
+      composer.addPass(bloom);
+      composer.addPass(new OutputPass());
+
+      // ---------- lights ----------
+      const hemi = new THREE.HemisphereLight(0x9fb4dd, 0x05070e, 0.35);
+      scene.add(hemi);
+      const key = new THREE.DirectionalLight(0xdfe7ff, 0.0);
+      key.position.set(-6, 10, 7);
+      scene.add(key);
+      const inner = new THREE.PointLight(0xcfdcff, 0, 14, 1.6);
+      inner.position.set(0, 0.1, 0.4);
+      scene.add(inner);
+
+      // ---------- the glass cube ----------
+      const S = 4; // cube size
+      const HS = S / 2;
+      const cube = new THREE.Group();
+      scene.add(cube);
+
+      const glassMat = new THREE.MeshBasicMaterial({
+        color: 0x3a5488,
+        transparent: true,
+        opacity: 0.0,
+        side: THREE.DoubleSide,
+        depthWrite: false,
+      });
+      cube.add(new THREE.Mesh(new THREE.BoxGeometry(S, S, S), glassMat));
+
+      // Edges as thin bars so bloom can catch them; each bar keeps its own material for the light sweep.
+      const edgeBars = [];
+      const corners = [];
+      for (const x of [-HS, HS]) for (const y of [-HS, HS]) for (const z of [-HS, HS]) corners.push(new THREE.Vector3(x, y, z));
+      const edgePairs = [];
+      for (let i = 0; i < 8; i++)
+        for (let j = i + 1; j < 8; j++) {
+          const d = corners[i].distanceTo(corners[j]);
+          if (Math.abs(d - S) < 1e-6) edgePairs.push([corners[i], corners[j]]);
+        }
+      function bar(a, b, r, mat) {
+        const len = a.distanceTo(b);
+        const g = new THREE.CylinderGeometry(r, r, len, 6, 1, true);
+        const m = new THREE.Mesh(g, mat);
+        m.position.copy(a).add(b).multiplyScalar(0.5);
+        m.quaternion.setFromUnitVectors(new THREE.Vector3(0, 1, 0), b.clone().sub(a).normalize());
+        return m;
+      }
+      for (const [a, b] of edgePairs) {
+        const mat = new THREE.MeshBasicMaterial({ color: C.edge, transparent: true, opacity: 0 });
+        const m = bar(a, b, 0.014, mat);
+        // sweep order: diagonal from the (-,+,+) corner
+        m.userData.order = (a.x + b.x) * -0.5 + (a.y + b.y) * 0.5 + (a.z + b.z) * 0.5;
+        cube.add(m);
+        edgeBars.push(m);
+      }
+      const orderMin = Math.min(...edgeBars.map((m) => m.userData.order));
+      const orderMax = Math.max(...edgeBars.map((m) => m.userData.order));
+      edgeBars.forEach((m) => (m.userData.k = (m.userData.order - orderMin) / (orderMax - orderMin)));
+
+      // Floor plate + faint grid inside the cube
+      const floorY = -HS + 0.02;
+      const floor = new THREE.Mesh(
+        new THREE.PlaneGeometry(S - 0.1, S - 0.1),
+        new THREE.MeshStandardMaterial({ color: 0x080c16, roughness: 0.35, metalness: 0.4, transparent: true, opacity: 0 }),
+      );
+      floor.rotation.x = -Math.PI / 2;
+      floor.position.y = floorY;
+      cube.add(floor);
+      const grid = new THREE.GridHelper(S - 0.1, 16, 0x6f84ad, 0x2a3754);
+      grid.position.y = floorY + 0.005;
+      grid.material.transparent = true;
+      grid.material.opacity = 0;
+      cube.add(grid);
+
+      // Slot on the top face
+      const slot = new THREE.Mesh(
+        new THREE.PlaneGeometry(1.25, 0.09),
+        new THREE.MeshBasicMaterial({ color: C.white, transparent: true, opacity: 0 }),
+      );
+      slot.rotation.x = -Math.PI / 2;
+      slot.position.set(0, HS + 0.002, 0);
+      cube.add(slot);
+
+      // ---------- the miniature financial world ----------
+      const world = new THREE.Group();
+      cube.add(world);
+      const blockMat = () =>
+        new THREE.MeshStandardMaterial({ color: C.graphite, roughness: 0.38, metalness: 0.75, transparent: true, opacity: 0, emissive: 0xffffff, emissiveIntensity: 0 });
+      const lineMat = () => new THREE.LineBasicMaterial({ color: C.edge, transparent: true, opacity: 0 });
+      const blocks = {};
+      function block(name, w, h, d, x, z) {
+        const g = new THREE.BoxGeometry(w, h, d);
+        const mesh = new THREE.Mesh(g, blockMat());
+        mesh.position.set(x, floorY + h / 2, z);
+        const edges = new THREE.LineSegments(new THREE.EdgesGeometry(g), lineMat());
+        mesh.add(edges);
+        world.add(mesh);
+        blocks[name] = { mesh, edges, top: new THREE.Vector3(x, floorY + h, z), base: new THREE.Vector3(x, floorY + 0.06, z) };
+        return mesh;
+      }
+      // Bank: a tower with a stepped top
+      block("bank", 0.62, 1.55, 0.62, 0.0, -1.05);
+      const bankCap = new THREE.Mesh(new THREE.BoxGeometry(0.42, 0.16, 0.42), blockMat());
+      bankCap.position.set(0, floorY + 1.55 + 0.08, -1.05);
+      world.add(bankCap);
+      // Suppliers
+      block("s1", 0.5, 0.62, 0.5, -1.2, 0.05);
+      block("s2", 0.42, 0.9, 0.42, 1.15, -0.55);
+      // Invoices: stacks of thin plates
+      const invoices = [];
+      [[-0.95, 1.05], [-0.55, 1.2], [-1.35, 0.85]].forEach(([x, z], i) => {
+        const n = 3 + i;
+        for (let k = 0; k < n; k++) {
+          const p = new THREE.Mesh(new THREE.BoxGeometry(0.36, 0.035, 0.26), blockMat());
+          p.position.set(x + (k % 2) * 0.02, floorY + 0.03 + k * 0.05, z);
+          p.rotation.y = (k % 3) * 0.08 - 0.08;
+          world.add(p);
+          invoices.push(p);
+        }
+      });
+      // The account that does not exist: only a dashed outline
+      const ghostG = new THREE.BoxGeometry(0.5, 0.5, 0.5);
+      const ghost = new THREE.LineSegments(
+        new THREE.EdgesGeometry(ghostG),
+        new THREE.LineDashedMaterial({ color: C.edge, dashSize: 0.06, gapSize: 0.05, transparent: true, opacity: 0 }),
+      );
+      ghost.computeLineDistances();
+      ghost.position.set(1.15, floorY + 0.25, 1.0);
+      world.add(ghost);
+
+      // ---------- rails ----------
+      const hub = new THREE.Vector3(0.05, floorY + 0.07, 0.55);
+      const P = (x, z) => new THREE.Vector3(x, floorY + 0.07, z);
+      const routes = {
+        r1: new THREE.CatmullRomCurve3([hub, P(-0.45, 0.6), P(-0.95, 0.35), blocks.s1.base.clone().setY(floorY + 0.07)]),
+        r2: new THREE.CatmullRomCurve3([blocks.s1.base.clone().setY(floorY + 0.07), P(-0.75, -0.55), P(0.3, -0.75), blocks.s2.base.clone().setY(floorY + 0.07)]),
+        r3: new THREE.CatmullRomCurve3([blocks.s2.base.clone().setY(floorY + 0.07), P(0.75, -0.95), P(0.35, -1.05), blocks.bank.base.clone().setY(floorY + 0.07)]),
+      };
+      // Failure rail: bank -> ghost account -> through the wall -> void
+      const failCurve = new THREE.CatmullRomCurve3([
+        blocks.bank.base.clone().setY(floorY + 0.07),
+        P(0.45, -0.4),
+        P(0.95, 0.45),
+        P(1.15, 1.0),
+        P(1.35, 1.55),
+        new THREE.Vector3(1.75, floorY + 0.07, HS + 0.02),
+        new THREE.Vector3(2.4, floorY - 0.05, HS + 1.4),
+        new THREE.Vector3(3.3, floorY - 0.35, HS + 3.4),
+        new THREE.Vector3(4.4, floorY - 0.8, HS + 6.0),
+      ]);
+
+      const railVS = `
+        varying vec2 vUv;
+        void main() { vUv = uv; gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0); }`;
+      const railFS = `
+        uniform float uProgress; uniform float uBase; uniform float uGain; uniform vec3 uColor; uniform float uFadeTail;
+        varying vec2 vUv;
+        void main() {
+          float x = vUv.x;
+          float lit = step(x, uProgress);
+          float head = smoothstep(uProgress - 0.12, uProgress, x) * lit;
+          float tail = mix(1.0, smoothstep(1.0, 0.55, x), uFadeTail);
+          float a = (uBase + lit * uGain * (0.55 + 0.9 * head)) * tail;
+          gl_FragColor = vec4(uColor * (1.0 + head * 1.6), a);
+        }`;
+      function railMesh(curve, r, segs = 160) {
+        const mat = new THREE.ShaderMaterial({
+          uniforms: { uProgress: { value: 0 }, uBase: { value: 0 }, uGain: { value: 0 }, uColor: { value: new THREE.Color(0xcfe0ff) }, uFadeTail: { value: 0 } },
+          vertexShader: railVS,
+          fragmentShader: railFS,
+          transparent: true,
+          depthWrite: false,
+          blending: THREE.AdditiveBlending,
+        });
+        const m = new THREE.Mesh(new THREE.TubeGeometry(curve, segs, r, 8, false), mat);
+        cube.add(m);
+        return m;
+      }
+      const rails = { r1: railMesh(routes.r1, 0.016), r2: railMesh(routes.r2, 0.016), r3: railMesh(routes.r3, 0.016) };
+      const failRail = railMesh(failCurve, 0.02, 320);
+      failRail.material.uniforms.uFadeTail.value = 1;
+      failRail.material.uniforms.uColor.value = new THREE.Color(0xffffff);
+
+      // ---------- the agent (blue ball) ----------
+      const agent = new THREE.Mesh(
+        new THREE.SphereGeometry(0.14, 48, 32),
+        new THREE.MeshStandardMaterial({ color: C.blue, emissive: C.blue, emissiveIntensity: 1.6, roughness: 0.25, metalness: 0.2, transparent: true, opacity: 0 }),
+      );
+      cube.add(agent);
+      const agentLight = new THREE.PointLight(C.blue, 0, 3.2, 1.8);
+      agent.add(agentLight);
+      const halo = new THREE.Mesh(
+        new THREE.SphereGeometry(0.3, 32, 16),
+        new THREE.MeshBasicMaterial({ color: C.blue, transparent: true, opacity: 0, blending: THREE.AdditiveBlending, depthWrite: false }),
+      );
+      agent.add(halo);
+
+      // Payment pulse travelling the failure rail
+      const pulse = new THREE.Mesh(
+        new THREE.SphereGeometry(0.06, 24, 16),
+        new THREE.MeshBasicMaterial({ color: 0xffffff, transparent: true, opacity: 0 }),
+      );
+      cube.add(pulse);
+
+      // Wall flash where the failure rail crosses the glass
+      const crack = new THREE.Mesh(
+        new THREE.RingGeometry(0.02, 0.5, 48),
+        new THREE.MeshBasicMaterial({ color: 0xffffff, transparent: true, opacity: 0, side: THREE.DoubleSide, blending: THREE.AdditiveBlending, depthWrite: false }),
+      );
+      crack.position.set(1.75, floorY + 0.12, HS + 0.01);
+      cube.add(crack);
+
+      // ---------- the emerald key card ----------
+      const cardW = 1.08;
+      const cardH = 1.712;
+      const cardCanvas = document.createElement("canvas");
+      cardCanvas.width = 540;
+      cardCanvas.height = 856;
+      const cardTex = new THREE.CanvasTexture(cardCanvas);
+      cardTex.colorSpace = THREE.SRGBColorSpace;
+      cardTex.anisotropy = 8;
+      function drawCard(logo) {
+        const g = cardCanvas.getContext("2d");
+        const w = cardCanvas.width;
+        const h = cardCanvas.height;
+        const r = 34;
+        g.clearRect(0, 0, w, h);
+        g.save();
+        g.beginPath();
+        g.roundRect(0, 0, w, h, r);
+        g.clip();
+        const lg = g.createLinearGradient(0, 0, w * 0.55, h);
+        lg.addColorStop(0, "#237e66");
+        lg.addColorStop(0.32, "#06402f");
+        lg.addColorStop(0.54, "#146650");
+        lg.addColorStop(0.78, "#042d22");
+        lg.addColorStop(1, "#0f5845");
+        g.fillStyle = lg;
+        g.fillRect(0, 0, w, h);
+        const rg = g.createRadialGradient(w * 0.2, 0, 0, w * 0.2, 0, w * 1.1);
+        rg.addColorStop(0, "rgba(150,255,210,0.22)");
+        rg.addColorStop(1, "rgba(150,255,210,0)");
+        g.fillStyle = rg;
+        g.fillRect(0, 0, w, h);
+        // brushed grain (seeded)
+        const gr = mulberry32(7);
+        for (let y = 0; y < h; y += 2) {
+          g.fillStyle = `rgba(255,255,255,${0.012 + gr() * 0.03})`;
+          g.fillRect(0, y, w, 1);
+        }
+        // guilloche rings
+        g.strokeStyle = "rgba(221,246,236,0.07)";
+        g.lineWidth = 1.2;
+        for (let i = 0; i < 26; i++) {
+          g.beginPath();
+          g.ellipse(w * 0.95, h * 0.55, 60 + i * 13, 40 + i * 9, 0.5, 0, Math.PI * 2);
+          g.stroke();
+        }
+        // header: logo + wordmark
+        if (logo) {
+          g.globalAlpha = 0.92;
+          g.drawImage(logo, 44, 42, 46, 46);
+          g.globalAlpha = 1;
+        }
+        g.fillStyle = "#ddf6ec";
+        g.font = "600 30px 'Helvetica Neue', Arial, sans-serif";
+        g.letterSpacing = "9px";
+        g.fillText("AXIOMIC", 104, 76);
+        // chip
+        const cx = 44;
+        const cy = 200;
+        const chip = g.createLinearGradient(cx, cy, cx + 92, cy + 70);
+        chip.addColorStop(0, "#fbeab7");
+        chip.addColorStop(0.35, "#d9b866");
+        chip.addColorStop(0.6, "#f3dc9a");
+        chip.addColorStop(1, "#b48a3c");
+        g.fillStyle = chip;
+        g.beginPath();
+        g.roundRect(cx, cy, 92, 70, 12);
+        g.fill();
+        g.strokeStyle = "rgba(122,90,30,0.55)";
+        g.lineWidth = 2;
+        g.beginPath();
+        g.moveTo(cx + 30, cy);
+        g.lineTo(cx + 30, cy + 70);
+        g.moveTo(cx + 62, cy);
+        g.lineTo(cx + 62, cy + 70);
+        g.moveTo(cx, cy + 35);
+        g.lineTo(cx + 92, cy + 35);
+        g.stroke();
+        // footer
+        g.fillStyle = "rgba(221,246,236,0.7)";
+        g.font = "500 20px ui-monospace, Menlo, monospace";
+        g.letterSpacing = "6px";
+        g.fillText("SANDBOX", 44, h - 150);
+        g.fillStyle = "#ddf6ec";
+        g.font = "600 34px 'Helvetica Neue', Arial, sans-serif";
+        g.letterSpacing = "3px";
+        g.fillText("CUENTAS POR PAGAR", 44, h - 104);
+        g.restore();
+        // edge highlight
+        g.strokeStyle = "rgba(255,255,255,0.28)";
+        g.lineWidth = 3;
+        g.beginPath();
+        g.roundRect(1.5, 1.5, w - 3, h - 3, r);
+        g.stroke();
+        cardTex.needsUpdate = true;
+      }
+      drawCard(null);
+      const cardGroup = new THREE.Group();
+      const cardFront = new THREE.Mesh(
+        new THREE.PlaneGeometry(cardW, cardH),
+        new THREE.MeshStandardMaterial({ map: cardTex, roughness: 0.32, metalness: 0.55, transparent: true, emissive: 0x0a3b2c, emissiveIntensity: 0.35 }),
+      );
+      const cardBack = new THREE.Mesh(
+        new THREE.PlaneGeometry(cardW, cardH),
+        new THREE.MeshStandardMaterial({ color: 0x063a2b, roughness: 0.4, metalness: 0.6, transparent: true }),
+      );
+      cardBack.rotation.y = Math.PI;
+      cardGroup.add(cardFront, cardBack);
+      cube.add(cardGroup);
+
+      const readyLogo = new Promise((resolve) => {
+        new THREE.ImageLoader().load("assets/axiomic-mark.png", (img) => {
+          drawCard(img);
+          resolve();
+        }, undefined, () => resolve());
+      });
+      window.__hf = window.__hf || {};
+      window.__hf.buildReady = window.__hf.buildReady || {};
+      window.__hf.buildReady["sandbox-card"] = readyLogo;
+
+      // ---------- the field of cubes (430 episodes, 6 worlds) ----------
+      const barR = 0.035;
+      const edgeGeos = edgePairs.map(([a, b]) => {
+        const g = new THREE.CylinderGeometry(barR, barR, a.distanceTo(b), 4, 1, true);
+        const q = new THREE.Quaternion().setFromUnitVectors(new THREE.Vector3(0, 1, 0), b.clone().sub(a).normalize());
+        g.applyQuaternion(q);
+        const mid = a.clone().add(b).multiplyScalar(0.5);
+        g.translate(mid.x, mid.y, mid.z);
+        return g;
+      });
+      const frameGeo = mergeGeometries(edgeGeos);
+      const clusterCenters = [
+        new THREE.Vector3(0, 0, 0),
+        new THREE.Vector3(-62, 14, -40),
+        new THREE.Vector3(58, -10, -52),
+        new THREE.Vector3(-40, -22, 46),
+        new THREE.Vector3(70, 20, 36),
+        new THREE.Vector3(4, 30, -96),
+      ];
+      const cells = [];
+      clusterCenters.forEach((c, ci) => {
+        const n = ci === 0 ? 75 : 71; // 75 + 5*71 = 430
+        let made = 0;
+        const span3 = 5;
+        for (let i = 0; made < n; i++) {
+          const gx = (i % span3) - 2;
+          const gz = Math.floor(i / span3) % span3 - 2;
+          const gy = Math.floor(i / (span3 * span3)) - 1;
+          if (ci === 0 && gx === 0 && gy === 0 && gz === 0) continue; // the hero cube lives here
+          const sp = 7.2;
+          const jitter = ci === 0 ? 0 : 0.6;
+          cells.push({
+            pos: new THREE.Vector3(c.x + gx * sp + (rand() - 0.5) * jitter, c.y + gy * sp + (rand() - 0.5) * jitter, c.z + gz * sp + (rand() - 0.5) * jitter),
+            dist: Math.hypot(c.x + gx * sp, c.y + gy * sp, c.z + gz * sp),
+            flash: rand() < 0.07 ? 13 + rand() * 3 : -1,
+            phase: rand() * Math.PI * 2,
+          });
+          made++;
+        }
+      });
+      const N = cells.length;
+      const fieldFrames = new THREE.InstancedMesh(frameGeo, new THREE.MeshBasicMaterial({ color: 0xffffff, transparent: true, opacity: 0, depthWrite: false }), N);
+      const fieldGlass = new THREE.InstancedMesh(
+        new THREE.BoxGeometry(S, S, S),
+        new THREE.MeshBasicMaterial({ color: 0xffffff, transparent: true, opacity: 0, depthWrite: false }),
+        N,
+      );
+      const fieldDots = new THREE.InstancedMesh(new THREE.SphereGeometry(0.32, 16, 12), new THREE.MeshBasicMaterial({ color: 0xffffff, transparent: true, opacity: 0, depthWrite: false }), N);
+      const m4 = new THREE.Matrix4();
+      cells.forEach((cell, i) => {
+        m4.makeTranslation(cell.pos.x, cell.pos.y, cell.pos.z);
+        fieldFrames.setMatrixAt(i, m4);
+        fieldGlass.setMatrixAt(i, m4);
+        m4.makeTranslation(cell.pos.x, cell.pos.y - 1.2, cell.pos.z);
+        fieldDots.setMatrixAt(i, m4);
+        fieldDots.setColorAt(i, new THREE.Color(C.blue));
+        fieldFrames.setColorAt(i, new THREE.Color(C.edge));
+        fieldGlass.setColorAt(i, new THREE.Color(0x3a5488));
+      });
+      scene.add(fieldGlass, fieldFrames, fieldDots);
+      const tmpColor = new THREE.Color();
+      const edgeC = new THREE.Color(C.edge);
+      const glassC = new THREE.Color(0x3a5488);
+      const blueC = new THREE.Color(C.blue);
+      const whiteC = new THREE.Color(0xffffff);
+
+      // ---------- timeline in seconds ----------
+      const T = {
+        sweep: [0.2, 2.6],
+        cardIn: [2.3, 4.9],
+        worldOn: [4.2, 5.6],
+        r1: [5.4, 6.5],
+        r2: [6.6, 7.7],
+        r3: [7.8, 8.9],
+        fail: [9.4, 12.0],
+        pull: [12.4, 16.6],
+        out: [16.4, 18.0],
+      };
+
+      function cameraAt(t) {
+        // azimuth / elevation / distance / target, piecewise and continuous
+        let az, el, dist;
+        const target = new THREE.Vector3(0, -0.15, 0);
+        const a0 = 0.62;
+        if (t < T.worldOn[0]) {
+          const k = easeInOut(span(t, 0, T.worldOn[0]));
+          az = lerp(a0 - 0.18, a0, k);
+          el = lerp(0.12, 0.3, k);
+          dist = lerp(10.5, 11.8, k);
+          target.y = lerp(0.2, 0.5, k);
+        } else if (t < T.fail[0]) {
+          const k = easeInOut(span(t, T.worldOn[0], T.fail[0]));
+          az = lerp(a0, a0 + 0.95, k);
+          el = lerp(0.3, 0.5, k);
+          dist = lerp(11.8, 11.2, k);
+          target.y = lerp(0.5, -0.25, k);
+        } else if (t < T.pull[0]) {
+          const k = easeInOut(span(t, T.fail[0], T.pull[0]));
+          az = lerp(a0 + 0.95, a0 + 1.12, k);
+          el = lerp(0.5, 0.38, k);
+          dist = lerp(11.2, 11.4, k);
+          target.set(lerp(0, 0.9, k), lerp(-0.25, -0.6, k), lerp(0, 1.4, k));
+        } else {
+          const k = span(t, T.pull[0], 18);
+          // exponential dolly: constant perceived speed, eased at both ends
+          const e = easeInOut(span(t, T.pull[0], T.pull[1]));
+          az = lerp(a0 + 1.12, a0 + 1.55, easeInOut(k));
+          el = lerp(0.36, 0.52, e);
+          dist = 11.4 * Math.pow(235 / 11.4, e);
+          target.set(lerp(0.9, 4, e), lerp(-0.6, -2, e), lerp(1.4, -14, e));
+        }
+        camera.position.set(target.x + dist * Math.cos(el) * Math.sin(az), target.y + dist * Math.sin(el), target.z + dist * Math.cos(el) * Math.cos(az));
+        camera.lookAt(target);
+      }
+
+      function renderAt(time) {
+        const t = clamp(time, 0, 18);
+        cameraAt(t);
+
+        // fade from / to black (loop seam)
+        const fadeIn = 1 - smooth(span(t, 0, 1.0));
+        const fadeOut = smooth(span(t, T.out[0] + 0.5, T.out[1]));
+        document.getElementById("fade").style.opacity = String(Math.max(fadeIn, fadeOut));
+
+        // 1 · light sweep reveals the edges
+        const sw = span(t, T.sweep[0], T.sweep[1]);
+        edgeBars.forEach((m) => {
+          const k = m.userData.k;
+          const hit = clamp(1 - Math.abs(sw * 1.35 - 0.15 - k) * 3.2);
+          const settled = smooth(clamp((sw * 1.35 - 0.15 - k) * 3)) * 0.42;
+          m.material.opacity = Math.max(hit * 1.0, settled) * (1 - span(t, T.pull[0] + 1.2, T.pull[0] + 2.4) * 0.6);
+        });
+        glassMat.opacity = 0.02 + 0.06 * span(t, T.sweep[0], T.sweep[1]);
+        key.intensity = 1.6 * span(t, 0.5, 3);
+
+        // 2 · the key card floats in and slides into the slot
+        const ci = span(t, T.cardIn[0], T.cardIn[1]);
+        const cIn = easeInOut(ci);
+        const settle = span(t, T.cardIn[1] - 0.6, T.cardIn[1]);
+        cardGroup.position.set(lerp(3.2, 0, cIn), lerp(4.6, HS + cardH / 2 - 1.15, cIn), lerp(1.6, 0, cIn));
+        cardGroup.rotation.set(lerp(-0.35, 0, cIn), lerp(1.9, 0, cIn) + Math.sin(t * 1.3) * 0.04 * (1 - settle), lerp(0.4, 0, cIn));
+        const cardVis = smooth(span(t, T.cardIn[0], T.cardIn[0] + 0.5)) * (1 - span(t, T.pull[0] + 0.6, T.pull[0] + 1.6));
+        cardFront.material.opacity = cardVis;
+        cardBack.material.opacity = cardVis;
+        cardFront.visible = cardBack.visible = cardVis > 0.001;
+        const click = span(t, T.cardIn[1] - 0.05, T.cardIn[1] + 0.5);
+        slot.material.opacity = (0.15 * span(t, 1.6, 2.6) + Math.sin(click * Math.PI) * 0.9) * (1 - span(t, T.pull[0], T.pull[0] + 1));
+
+        // world lights up
+        const on = smooth(span(t, T.worldOn[0], T.worldOn[1]));
+        inner.intensity = 7 * on + 6 * Math.sin(click * Math.PI);
+        floor.material.opacity = 0.9 * on;
+        grid.material.opacity = 0.45 * on;
+        world.children.forEach((o) => {
+          if (o.material && o !== ghost) o.material.opacity = on;
+        });
+        Object.values(blocks).forEach((b) => (b.edges.material.opacity = 0.6 * on));
+        Object.values(rails).forEach((r) => (r.material.uniforms.uBase.value = 0.1 * on));
+
+        // 3 · the agent travels its routes; arrivals glow
+        agent.material.opacity = smooth(span(t, T.worldOn[0] + 0.3, T.worldOn[1]));
+        halo.material.opacity = 0.18 * agent.material.opacity;
+        agentLight.intensity = 3 * agent.material.opacity;
+        let pos = hub.clone();
+        const legs = [["r1", T.r1], ["r2", T.r2], ["r3", T.r3]];
+        legs.forEach(([name, [a, b]]) => {
+          const k = span(t, a, b);
+          rails[name].material.uniforms.uProgress.value = easeInOut(k);
+          rails[name].material.uniforms.uGain.value = 0.85 * (1 - span(t, T.fail[0] + 0.4, T.fail[0] + 1.6) * 0.6);
+          if (t >= a) pos = routes[name].getPointAt(easeInOut(k));
+        });
+        agent.position.copy(pos).setY(pos.y + 0.08 + Math.abs(Math.sin(t * 6)) * 0.03 * on);
+        const arrive = (name, at) => {
+          const k = span(t, at - 0.05, at + 0.7);
+          const g = Math.sin(k * Math.PI);
+          blocks[name].mesh.material.emissiveIntensity = 0.03 * on + 0.14 * g;
+          blocks[name].edges.material.opacity = 0.6 * on + 0.4 * g;
+        };
+        arrive("s1", T.r1[1]);
+        arrive("s2", T.r2[1]);
+        arrive("bank", T.r3[1]);
+
+        // 4 · the failure: a payment to an account that does not exist, into the void
+        const fk = span(t, T.fail[0], T.fail[1]);
+        const slow = fk < 0.5 ? easeOut(fk / 0.5) * 0.62 : 0.62 + ((fk - 0.5) / 0.5) * 0.38; // decelerates through the ghost
+        const fu = failRail.material.uniforms;
+        fu.uProgress.value = slow;
+        fu.uGain.value = fk > 0 ? 1.4 : 0;
+        fu.uBase.value = 0;
+        pulse.material.opacity = fk > 0 && fk < 1 ? 1 - span(fk, 0.85, 1) : 0;
+        if (fk > 0) pulse.position.copy(failCurve.getPointAt(clamp(slow, 0, 0.999)));
+        ghost.material.opacity = 0.5 * on + 0.5 * Math.sin(span(fk, 0.28, 0.6) * Math.PI);
+        const wallHit = span(fk, 0.6, 0.9);
+        crack.material.opacity = Math.sin(wallHit * Math.PI) * 0.9;
+        crack.scale.setScalar(0.4 + wallHit * 1.4);
+        glassMat.opacity += Math.sin(wallHit * Math.PI) * 0.12;
+        const failDim = 1 - span(t, T.pull[0] + 1.5, T.pull[0] + 2.8);
+        fu.uGain.value *= failDim;
+
+        // 5 · the scale: hundreds of identical cubes
+        const fieldK = span(t, T.pull[0] + 0.15, T.pull[0] + 1.4);
+        const fieldDim = 1 - span(t, T.out[0], T.out[1] - 0.2);
+        fieldFrames.material.opacity = 0.42 * smooth(fieldK);
+        fieldGlass.material.opacity = 0.05 * smooth(fieldK);
+        fieldDots.material.opacity = smooth(fieldK);
+        cells.forEach((cell, i) => {
+          // dim from the outside in on the way out
+          const outK = span(t, T.out[0] + (1 - Math.min(cell.dist / 130, 1)) * 0.9, T.out[0] + 0.5 + (1 - Math.min(cell.dist / 130, 1)) * 0.9);
+          const beat = 0.75 + 0.25 * Math.sin(t * 3 + cell.phase);
+          // cubes the camera flies through fade so the frame never washes out
+          const near = smooth(span(cell.pos.distanceTo(camera.position), 7, 30));
+          const vis = near * (1 - outK);
+          fieldFrames.setColorAt(i, tmpColor.copy(edgeC).multiplyScalar(vis));
+          fieldGlass.setColorAt(i, tmpColor.copy(glassC).multiplyScalar(vis));
+          let c = tmpColor.copy(blueC).multiplyScalar(beat * vis);
+          if (cell.flash > 0) {
+            const f = Math.sin(span(t, cell.flash, cell.flash + 0.9) * Math.PI);
+            c = c.lerp(whiteC, f * vis);
+          }
+          fieldDots.setColorAt(i, c);
+        });
+        fieldDots.instanceColor.needsUpdate = true;
+        fieldFrames.instanceColor.needsUpdate = true;
+        fieldGlass.instanceColor.needsUpdate = true;
+        fieldFrames.material.opacity *= fieldDim;
+        fieldGlass.material.opacity *= fieldDim;
+        fieldFrames.visible = fieldGlass.visible = fieldDots.visible = fieldK > 0.001;
+        scene.fog.density = 0.0018 * span(t, T.pull[0], T.pull[1]) + 0.012 * span(t, T.out[0], T.out[1]);
+        bloom.strength = 0.85 + 0.35 * Math.sin(wallHit * Math.PI);
+
+        composer.render();
+      }
+
+      window.addEventListener("hf-seek", (e) => renderAt(e.detail.time));
+      readyLogo.then(() => renderAt(window.__hfThreeTime || 0));
+      renderAt(window.__hfThreeTime || 0);
+    </script>
+  </body>
+</html>
