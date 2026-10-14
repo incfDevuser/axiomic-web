@@ -4,6 +4,7 @@ import { useRef } from "react";
 import { AnimatePresence, motion, useMotionTemplate, useMotionValue, useReducedMotion, useSpring, useTransform } from "motion/react";
 import type { Lang } from "@/lib/i18n";
 import { LogoMark } from "./LogoMark";
+import { SpotlightGrid, useSpotlight } from "./Night";
 import { Rosette } from "./Rosette";
 import { Stage, useProgress, useStage } from "./Stage";
 
@@ -14,7 +15,7 @@ const copy = {
     eyebrow: "Siguiente paso · piloto",
     title: (
       <>
-        Si no encontramos fallas relevantes, <span className="title-accent">no pagas.</span>
+        Tres semanas, un flujo tuyo, <span className="title-accent">precio fijo.</span>
       </>
     ),
     pass: "Pase de piloto",
@@ -23,7 +24,7 @@ const copy = {
       { k: "Alcance", v: "1 flujo" },
       { k: "Precio", v: "Desde 30 UF" },
     ],
-    priceNote: null as string | null,
+    priceNote: "Precio fijo por alcance, acordado antes de empezar. No depende de cuántas fallas encontremos." as string | null,
     weeksTitle: "Cómo se trabaja",
     weeks: [
       { w: "Semana 1", t: "Conectamos tu agente" },
@@ -33,11 +34,11 @@ const copy = {
     chips: ["Tu agente tal como es", "Token por episodio", "Sin dinero real", "Sin credenciales de producción"],
     cta: "Agenda un piloto",
     stamp: {
-      eyebrow: "Sello Axiomic",
+      eyebrow: "Niveles de evidencia",
       level: "Nivel",
       title: (
         <>
-          Cada agente evaluado recibe un nivel. <span className="title-accent">Un estándar para saber qué tan listo está para mover dinero.</span>
+          Cada evaluación deja un nivel de evidencia. <span className="title-accent">Describe esa versión, esos escenarios y esa fecha.</span>
         </>
       ),
       tiers: [
@@ -63,15 +64,15 @@ const copy = {
           criteria: ["Cumple todo lo del nivel Platino", "Mantiene el nivel en cada versión nueva del agente o del modelo", "Cada medición se puede repetir, con su transcripción"],
         },
       ],
-      requires: "Para tener este sello, el agente:",
-      note: "El sello describe lo que hizo el agente en esos escenarios, con esa versión y en esa fecha. Vence con cada versión nueva. No es una certificación.",
+      requires: "Para este nivel, el agente:",
+      note: "Un nivel describe lo que hizo el agente en esos escenarios, con esa versión y en esa fecha. Vence con cada versión nueva. No es una certificación ni un sello.",
     },
   },
   en: {
     eyebrow: "Next step · pilot",
     title: (
       <>
-        If we don&apos;t find relevant failures, <span className="title-accent">you don&apos;t pay.</span>
+        Three weeks, one of your flows, <span className="title-accent">fixed price.</span>
       </>
     ),
     pass: "Pilot pass",
@@ -80,7 +81,7 @@ const copy = {
       { k: "Scope", v: "1 flow" },
       { k: "Price", v: "From $1,300" },
     ],
-    priceNote: "Billed as 30 UF, Chile's inflation-indexed unit (≈ USD 1,300).",
+    priceNote: "Fixed price per scope, agreed up front; it does not depend on how many failures we find. 30 UF is Chile's inflation-indexed unit (≈ USD 1,300).",
     weeksTitle: "How we work",
     weeks: [
       { w: "Week 1", t: "We connect your agent" },
@@ -90,11 +91,11 @@ const copy = {
     chips: ["Your agent as it is", "Per-episode token", "No real money", "No production credentials"],
     cta: "Book a pilot",
     stamp: {
-      eyebrow: "Axiomic Seal",
+      eyebrow: "Evidence levels",
       level: "Level",
       title: (
         <>
-          Every evaluated agent gets a level. <span className="title-accent">A standard for how ready it is to move money.</span>
+          Every evaluation leaves a level of evidence. <span className="title-accent">It describes that version, those scenarios and that date.</span>
         </>
       ),
       tiers: [
@@ -103,7 +104,7 @@ const copy = {
           name: "Graphite",
           tag: "Evaluated",
           body: "We measured its risk per million and delivered the rules that would prevent its losses.",
-          criteria: ["Passed a pre-registered measurement on its real flow", "We know its risk per million, in dollars", "It received the rules that would prevent its losses"],
+          criteria: ["Passed a pre-registered measurement on its real flow", "We know its risk per million, in pesos", "It received the rules that would prevent its losses"],
         },
         {
           theme: "platinum",
@@ -120,8 +121,8 @@ const copy = {
           criteria: ["Meets everything in Platinum", "Keeps the level on every new version of the agent or the model", "Every measurement can be replayed, with its transcript"],
         },
       ],
-      requires: "To hold this seal, the agent:",
-      note: "The seal describes what the agent did in those scenarios, with that version and on that date. It expires with every new version. It is not a certification.",
+      requires: "For this level, the agent:",
+      note: "A level describes what the agent did in those scenarios, with that version and on that date. It expires with every new version. It is not a certification or a seal.",
     },
   },
 } satisfies Record<Lang, unknown>;
@@ -250,6 +251,7 @@ function TierSeal({ theme, name, i, still = false }: { theme: string; name: stri
 function SealStage({ t }: { t: T }) {
   const { ref: stageRef, pin, reduce, progress } = useStage();
   const p = useProgress(progress, reduce);
+  const spot = useSpotlight();
   const tiers = t.stamp.tiers;
   const n = tiers.length;
   const hold = Math.min(n - 1, Math.floor(span01(p * 0.999) * n));
@@ -268,18 +270,27 @@ function SealStage({ t }: { t: T }) {
   };
 
   return (
-    <section id="sello" className={`relative scroll-mt-24 ${pin ? "" : "py-24 sm:py-32"}`}>
+    <section
+      id="sello"
+      onPointerMove={spot.onPointerMove}
+      onPointerLeave={spot.onPointerLeave}
+      className={`night-field relative scroll-mt-24 overflow-clip ${pin ? "" : "py-24 sm:py-32"}`}
+    >
       <Stage stageRef={stageRef} pin={pin} length={3.4} className="pt-16">
-        <div className="mx-auto w-full max-w-[1400px] px-6 lg:px-14">
+        <SpotlightGrid gridRef={spot.grid} />
+        <div className="relative mx-auto w-full max-w-[1400px] px-6 lg:px-14">
           <div className="max-w-4xl">
-            <p className="text-[15px] font-semibold text-accent">{t.stamp.eyebrow}</p>
-            <h3 className="mt-3 text-[30px] leading-[1.1] font-semibold tracking-[-0.04em] text-balance sm:text-[44px]">{t.stamp.title}</h3>
+            <p className="inline-flex items-center gap-2.5 rounded-full border border-white/10 bg-white/[0.03] px-4 py-1.5 text-[14px] font-medium text-muted shadow-[inset_0_1px_0_rgba(255,255,255,0.06)] backdrop-blur-md">
+              <span className="h-1.5 w-1.5 rounded-full bg-white/60" />
+              {t.stamp.eyebrow}
+            </p>
+            <h3 className="hero-ink mt-5 text-[30px] leading-[1.1] font-semibold tracking-[-0.04em] text-balance sm:text-[44px]">{t.stamp.title}</h3>
           </div>
 
           {pin ? (
             <div className="mt-10 grid grid-cols-12 items-center gap-10">
               <div className="relative col-span-6 flex h-[min(52vh,440px)] items-center justify-center" style={{ perspective: 1200 }}>
-                <div className="pointer-events-none absolute h-[70%] w-[70%] rounded-full bg-accent/15 blur-[90px]" />
+                <div className="pointer-events-none absolute h-[70%] w-[70%] rounded-full bg-white/[0.06] blur-[90px]" />
                 {tiers.map((x, i) => {
                   const v = look(i);
                   return (
@@ -299,18 +310,18 @@ function SealStage({ t }: { t: T }) {
               <div className="col-span-6">
                 <ol className="mb-8 flex gap-2" aria-hidden>
                   {tiers.map((x, i) => (
-                    <li key={x.name} className={`h-1.5 rounded-full transition-[width,background-color] duration-500 ${i === hold ? "w-12 bg-accent" : i < hold ? "w-6 bg-accent/40" : "w-6 bg-edge"}`} />
+                    <li key={x.name} className={`h-1.5 rounded-full transition-[width,background-color] duration-500 ${i === hold ? "w-12 bg-white shadow-[0_0_10px_rgba(255,255,255,0.7)]" : i < hold ? "w-6 bg-white/40" : "w-6 bg-white/10"}`} />
                   ))}
                 </ol>
                 <AnimatePresence mode="wait">
                   <motion.div key={hold} initial={{ opacity: 0, y: 24 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -16 }} transition={{ duration: 0.45, ease }}>
-                    <p className="flex items-center gap-2 text-[15px] font-semibold text-accent">
-                      <span className="rounded-full bg-accent/15 px-2.5 py-0.5 text-[13px]">
+                    <p className="flex items-center gap-2 text-[15px] font-semibold text-white/70">
+                      <span className="rounded-full border border-white/15 bg-white/[0.05] px-2.5 py-0.5 text-[13px] text-white">
                         {t.stamp.level} {hold + 1}
                       </span>
                       {tiers[hold].tag}
                     </p>
-                    <p className="mt-3 text-[48px] leading-none font-semibold tracking-[-0.045em]">{tiers[hold].name}</p>
+                    <p className="hero-ink mt-3 text-[48px] leading-none font-semibold tracking-[-0.045em]">{tiers[hold].name}</p>
                     <p className="mt-4 max-w-[480px] text-[19px] leading-[1.5] text-muted">{tiers[hold].body}</p>
                     <p className="mt-8 text-[15px] font-semibold text-fg">{t.stamp.requires}</p>
                     <ul className="mt-4 space-y-3">
@@ -322,7 +333,7 @@ function SealStage({ t }: { t: T }) {
                           transition={{ duration: 0.4, ease, delay: 0.15 + j * 0.1 }}
                           className="flex items-center gap-3 text-[18px]"
                         >
-                          <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-accent text-[13px] text-on-accent">✓</span>
+                          <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full border border-white/20 bg-white/[0.06] text-[13px] text-white">✓</span>
                           {c}
                         </motion.li>
                       ))}
@@ -343,8 +354,8 @@ function SealStage({ t }: { t: T }) {
                   className="flex flex-col items-center text-center"
                 >
                   <TierSeal theme={x.theme} name={x.name} i={i} still />
-                  <p className="mt-6 flex items-center gap-2 text-[14px] font-semibold text-accent">
-                    <span className="rounded-full bg-accent/15 px-2 py-0.5 text-[12px]">
+                  <p className="mt-6 flex items-center gap-2 text-[14px] font-semibold text-white/70">
+                    <span className="rounded-full border border-white/15 bg-white/[0.05] px-2 py-0.5 text-[12px] text-white">
                       {t.stamp.level} {i + 1}
                     </span>
                     {x.tag}
@@ -352,7 +363,7 @@ function SealStage({ t }: { t: T }) {
                   <ul className="mt-4 space-y-2 text-left">
                     {x.criteria.map((c) => (
                       <li key={c} className="flex items-start gap-2.5 text-[16px] leading-[1.4] text-muted">
-                        <span className="mt-[3px] flex h-[18px] w-[18px] shrink-0 items-center justify-center rounded-full bg-accent text-[11px] text-on-accent">✓</span>
+                        <span className="mt-[3px] flex h-[18px] w-[18px] shrink-0 items-center justify-center rounded-full border border-white/20 bg-white/[0.06] text-[11px] text-white">✓</span>
                         {c}
                       </li>
                     ))}
@@ -373,14 +384,19 @@ const span01 = (v: number) => Math.min(Math.max(v, 0), 1);
 export function Pilot({ lang }: { lang: Lang }) {
   const t = copy[lang];
   const reduce = useReducedMotion();
+  const spot = useSpotlight();
   return (
     <>
-    <section id="piloto" className="relative scroll-mt-24 overflow-hidden py-24 sm:py-32">
-      <div className="pointer-events-none absolute top-1/2 left-[28%] h-[520px] w-[720px] -translate-x-1/2 -translate-y-1/2 rounded-full bg-accent/[0.08] blur-[120px]" />
+    <section id="piloto" onPointerMove={spot.onPointerMove} onPointerLeave={spot.onPointerLeave} className="night-field relative scroll-mt-24 overflow-hidden py-24 sm:py-32">
+      <SpotlightGrid gridRef={spot.grid} />
+      <div className="pointer-events-none absolute top-1/2 left-[28%] h-[520px] w-[720px] -translate-x-1/2 -translate-y-1/2 rounded-full bg-accent/[0.1] blur-[120px]" />
 
       <div className="relative mx-auto max-w-[1400px] px-6 lg:px-14">
-        <p className="text-[15px] font-semibold text-accent">{t.eyebrow}</p>
-        <h2 className="mt-3 max-w-4xl text-[36px] leading-[1.06] font-semibold tracking-[-0.045em] text-balance sm:text-[56px] lg:text-[64px]">{t.title}</h2>
+        <p className="inline-flex items-center gap-2.5 rounded-full border border-white/10 bg-white/[0.03] px-4 py-1.5 text-[14px] font-medium text-muted shadow-[inset_0_1px_0_rgba(255,255,255,0.06)] backdrop-blur-md">
+          <span className="h-1.5 w-1.5 rounded-full bg-accent shadow-[0_0_10px_rgba(61,123,255,0.9)]" />
+          {t.eyebrow}
+        </p>
+        <h2 className="hero-ink mt-5 max-w-4xl text-[36px] leading-[1.06] font-semibold tracking-[-0.045em] text-balance sm:text-[56px] lg:text-[64px]">{t.title}</h2>
 
         <div className="mt-16 grid grid-cols-1 items-center gap-16 lg:grid-cols-12 lg:gap-14">
           <div className="relative lg:col-span-7">
@@ -399,7 +415,7 @@ export function Pilot({ lang }: { lang: Lang }) {
           </div>
 
           <div className="lg:col-span-5">
-            <p className="text-[17px] font-semibold text-muted">{t.weeksTitle}</p>
+            <p className="text-[17px] font-semibold text-white/60">{t.weeksTitle}</p>
             <ol className="mt-6">
               {t.weeks.map((w, i) => (
                 <motion.li
@@ -410,11 +426,11 @@ export function Pilot({ lang }: { lang: Lang }) {
                   transition={{ duration: 0.5, ease, delay: 0.2 + i * 0.15 }}
                   className="relative flex gap-5 pb-8 last:pb-0"
                 >
-                  {i < t.weeks.length - 1 && <span className="absolute top-11 bottom-1 left-[21px] w-px bg-gradient-to-b from-accent/60 to-edge" />}
-                  <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full border border-accent/60 bg-accent/10 text-[17px] font-semibold text-accent">{i + 1}</span>
+                  {i < t.weeks.length - 1 && <span className="absolute top-11 bottom-1 left-[21px] w-px bg-gradient-to-b from-white/25 to-white/[0.04]" />}
+                  <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full border border-white/15 bg-white/[0.04] font-mono text-[16px] text-white shadow-[inset_0_1px_0_rgba(255,255,255,0.08)] backdrop-blur-md">{String(i + 1).padStart(2, "0")}</span>
                   <div className="pt-1">
-                    <p className="text-[14px] font-semibold text-accent">{w.w}</p>
-                    <p className="mt-0.5 text-[21px] leading-[1.3] font-semibold tracking-[-0.015em]">{w.t}</p>
+                    <p className="text-[14px] font-medium text-white/45">{w.w}</p>
+                    <p className="mt-0.5 text-[21px] leading-[1.3] font-semibold tracking-[-0.015em] text-white">{w.t}</p>
                   </div>
                 </motion.li>
               ))}
@@ -422,7 +438,7 @@ export function Pilot({ lang }: { lang: Lang }) {
 
             <a
               href="#contacto"
-              className="mt-10 inline-block rounded-full bg-accent px-7 py-3.5 text-[16px] font-semibold text-on-accent shadow-[0_10px_30px_-10px_rgba(37,99,255,0.56)] transition-[background-color,transform] duration-150 ease-out hover:bg-accent-hi active:scale-[0.97]"
+              className="mt-10 inline-block rounded-full bg-accent px-7 py-3.5 text-[16px] font-semibold text-on-accent shadow-[inset_0_1px_0_rgba(255,255,255,0.3),0_0_0_1px_rgba(96,165,250,0.45),0_14px_44px_-12px_rgba(61,123,255,0.75)] transition-[background-color,transform] duration-150 ease-out hover:bg-accent-hi active:scale-[0.97]"
             >
               {t.cta}
             </a>
@@ -430,7 +446,7 @@ export function Pilot({ lang }: { lang: Lang }) {
             <ul className="mt-8 flex flex-wrap gap-x-5 gap-y-2.5">
               {t.chips.map((c) => (
                 <li key={c} className="flex items-center gap-2 text-[15px] text-muted">
-                  <span className="text-accent">✓</span>
+                  <span className="text-white/50">✓</span>
                   {c}
                 </li>
               ))}

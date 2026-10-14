@@ -29,11 +29,11 @@ const copy = {
 export function Footer({ lang }: { lang: Lang }) {
   const t = copy[lang];
   return (
-    <footer className="zone-light zone-fade-top">
-      <div className="mx-auto max-w-[1400px] px-6 py-10 text-[15px] leading-[1.6] text-faint lg:px-14">
+    <footer className="border-t border-white/[0.06] bg-[#04060b]">
+      <div className="mx-auto max-w-[1400px] px-6 py-12 text-[15px] leading-[1.6] text-white/40 lg:px-14">
         <p className="max-w-3xl">{t.disclaimer}</p>
         <div className="mt-6 flex flex-wrap items-center justify-between gap-4">
-          <Link href={routes.home[lang]} className="flex items-center gap-2.5 text-[17px] font-semibold tracking-[-0.02em] text-fg">
+          <Link href={routes.home[lang]} className="flex items-center gap-2.5 text-[17px] font-semibold tracking-[-0.02em] text-white">
             <span className="flex h-8 w-8 items-center justify-center rounded-[9px] bg-white">
               <LogoMark className="h-6 w-6" />
             </span>
@@ -41,11 +41,11 @@ export function Footer({ lang }: { lang: Lang }) {
           </Link>
           <div className="flex flex-wrap items-center gap-x-6 gap-y-2">
             {t.links.map((l) => (
-              <Link key={l.href} href={l.href} className="transition-colors hover:text-fg">
+              <Link key={l.href} href={l.href} className="transition-colors hover:text-white">
                 {l.label}
               </Link>
             ))}
-            <a href={`mailto:${contactEmail}`} className="transition-colors hover:text-fg">
+            <a href={`mailto:${contactEmail}`} className="transition-colors hover:text-white">
               {contactEmail}
             </a>
             <span>{t.place}</span>

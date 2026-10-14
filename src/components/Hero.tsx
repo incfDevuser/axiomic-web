@@ -3,11 +3,12 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { motion, useReducedMotion, useScroll, useTransform } from "motion/react";
 import { REAL_CASE_ID } from "@/lib/content";
-import type { Lang } from "@/lib/i18n";
+import { realCase } from "@/lib/evidence";
+import { money, type Lang } from "@/lib/i18n";
 import { AgentCard } from "./AgentCard";
 import { CardZoom } from "./CardZoom";
 import { useCase } from "./CaseContext";
-import { Rosette } from "./Rosette";
+import { SpotlightGrid, useSpotlight } from "./Night";
 
 const copy = {
   es: {
@@ -15,10 +16,11 @@ const copy = {
     title: (
       <>
         Probamos tu agente de IA <br className="hidden sm:block" />
-        <span className="title-accent">antes de que maneje dinero real.</span>
+        con dinero simulado <br className="hidden sm:block" />
+        <span className="title-accent">antes de que toque dinero real.</span>
       </>
     ),
-    lead: "Lo ponemos a prueba con dinero simulado y te decimos, en pesos, cuánto podría perder y qué reglas lo evitan.",
+    lead: `En una prueba, un modelo real envió ${money("es", realCase.loss)} a cuentas que no existían y reportó que todo salió bien. Lo encontramos en simulación. Hacemos lo mismo con tu agente.`,
     cta: "Agenda un piloto",
     how: "Cómo funciona",
     story: "Cada tarjeta es un sandbox · tócala para ver qué pone a prueba",
@@ -29,10 +31,11 @@ const copy = {
     title: (
       <>
         We test your AI agent <br className="hidden sm:block" />
-        <span className="title-accent">before it handles real money.</span>
+        with simulated money <br className="hidden sm:block" />
+        <span className="title-accent">before it touches real money.</span>
       </>
     ),
-    lead: "We test it with simulated money and tell you, in pesos, how much it could lose and which rules prevent it.",
+    lead: `In one test, a real model sent ${money("en", realCase.loss)} to accounts that didn't exist and reported that everything went fine. We caught it in simulation. We do the same with your agent.`,
     cta: "Book a pilot",
     how: "How it works",
     story: "Each card is a sandbox · tap it to see what it tests",
@@ -81,6 +84,8 @@ export function Hero() {
   const textY = useTransform(scrollYProgress, [0, 1], [0, -60]);
   const textOpacity = useTransform(scrollYProgress, [0, 0.45], [1, 0]);
 
+  const { grid, onPointerMove, onPointerLeave } = useSpotlight();
+
   const scrollTo = (id: string) => {
     document.getElementById(id)?.scrollIntoView({ behavior: reduce ? "auto" : "smooth" });
   };
@@ -101,34 +106,43 @@ export function Hero() {
   const btn = "rounded-full px-6 py-3 text-[17px] font-medium transition-[background-color,border-color,transform] duration-150 ease-out active:scale-[0.97]";
 
   return (
-    <section ref={ref} className="relative overflow-hidden pb-24">
+    <section ref={ref} onPointerMove={onPointerMove} onPointerLeave={onPointerLeave} className="hero-night relative overflow-hidden pb-24">
+      <SpotlightGrid gridRef={grid} />
+      <div aria-hidden className="hero-beam -rotate-[18deg] opacity-40" />
+      <div aria-hidden className="hero-beam rotate-[18deg] opacity-40" />
       <div className="relative pt-32 pb-12 sm:pt-40 sm:pb-16">
-        <div className="pointer-events-none absolute top-[62%] left-1/2 h-[1100px] w-[1100px] -translate-x-1/2 -translate-y-1/2 text-accent/[0.13]">
-          <Rosette className="h-full w-full animate-[orbit-spin_240s_linear_infinite] motion-reduce:animate-none" />
-        </div>
-        <div className="pointer-events-none absolute top-[66%] left-1/2 h-[380px] w-[760px] -translate-x-1/2 -translate-y-1/2 rounded-full bg-accent/[0.12] blur-[110px]" />
 
       <motion.div style={{ y: textY, opacity: textOpacity }} className="relative mx-auto flex max-w-6xl flex-col items-center px-6 text-center">
+        <span
+          style={rise("0s")}
+          className={`${riseClass} inline-flex max-w-[280px] items-center gap-2.5 rounded-[20px] border border-white/10 text-left text-balance sm:max-w-none sm:rounded-full bg-white/[0.03] px-4 py-1.5 text-[14px] text-muted shadow-[inset_0_1px_0_rgba(255,255,255,0.06)] backdrop-blur-md`}
+        >
+          <span className="hero-badge-dot h-1.5 w-1.5 shrink-0 rounded-full bg-sky" />
+          {t.badge}
+        </span>
         <h1
           style={rise("0.08s")}
-          className={`${riseClass} mt-7 text-[44px] leading-[1.02] font-semibold tracking-[-0.05em] text-balance text-fg sm:text-[56px] lg:text-[66px] xl:text-[72px]`}
+          className={`${riseClass} hero-ink mt-7 text-[44px] leading-[1.02] font-semibold tracking-[-0.05em] text-balance sm:text-[56px] lg:text-[66px] xl:text-[72px]`}
         >
           {t.title}
         </h1>
-        <p style={rise("0.16s")} className={`${riseClass} mt-6 max-w-xl text-[19px] leading-[1.5] text-muted text-pretty sm:text-[20px]`}>
+        <p style={rise("0.16s")} className={`${riseClass} mt-6 max-w-2xl text-[19px] leading-[1.5] text-muted text-pretty sm:text-[20px]`}>
           {t.lead}
         </p>
         <div style={rise("0.24s")} className={`${riseClass} mt-8 flex flex-wrap items-center justify-center gap-3`}>
-          <a href="#contacto" className={`${btn} bg-accent text-on-accent shadow-[0_10px_30px_-10px_rgba(37,99,255,0.36)] hover:bg-accent-hi`}>
+          <a href="#contacto" className={`${btn} bg-accent text-on-accent shadow-[inset_0_1px_0_rgba(255,255,255,0.3),0_0_0_1px_rgba(96,165,250,0.45),0_14px_44px_-12px_rgba(61,123,255,0.75)] hover:bg-accent-hi`}>
             {t.cta}
           </a>
-          <button type="button" onClick={() => scrollTo("como-funciona")} className={`${btn} border border-edge bg-panel text-fg hover:border-faint`}>
+          <button type="button" onClick={() => scrollTo("como-funciona")} className={`${btn} border border-white/10 bg-white/[0.04] text-fg backdrop-blur-md hover:border-white/20 hover:bg-white/[0.08]`}>
             {t.how}
           </button>
         </div>
       </motion.div>
 
       <motion.div style={{ y: fanY, scale: fanScale, opacity: fanOpacity }} className="relative mt-16 sm:mt-24">
+        <div aria-hidden className="pointer-events-none absolute top-[46%] left-1/2 h-[260px] w-[900px] max-w-[120vw] -translate-x-1/2 -translate-y-1/2 rounded-full bg-accent/[0.16] blur-[100px]" />
+        <div aria-hidden className="hero-horizon pointer-events-none absolute top-[52%] left-1/2 h-px w-[1100px] max-w-[110vw] -translate-x-1/2 opacity-90" />
+        <div aria-hidden className="hero-horizon pointer-events-none absolute top-[52%] left-1/2 h-[6px] w-[700px] max-w-[90vw] -translate-x-1/2 -translate-y-[2.5px] opacity-60 blur-[6px]" />
         <div className="relative mx-auto h-[272px] sm:h-[332px] lg:h-[392px] xl:h-[440px]" onMouseLeave={() => setHovering(false)}>
           {disciplines.map((d, i) => {
             const offset = i - 2;

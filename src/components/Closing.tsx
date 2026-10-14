@@ -4,6 +4,7 @@ import { useState } from "react";
 import { motion } from "motion/react";
 import { contactEmail } from "@/lib/content";
 import type { Lang } from "@/lib/i18n";
+import { SpotlightGrid, useSpotlight } from "./Night";
 
 const ease = [0.23, 1, 0.32, 1] as const;
 
@@ -59,7 +60,7 @@ const copy = {
 } satisfies Record<Lang, unknown>;
 
 const field =
-  "w-full border-b border-edge bg-transparent py-2.5 text-[18px] text-fg outline-none transition-colors duration-150 placeholder:text-faint focus:border-accent";
+  "w-full border-b border-white/15 bg-transparent py-2.5 text-[18px] text-fg outline-none transition-[border-color,box-shadow] duration-200 placeholder:text-white/25 focus:border-white focus:shadow-[0_1px_0_0_rgba(255,255,255,0.9),0_8px_20px_-12px_rgba(255,255,255,0.5)]";
 
 type Status = "idle" | "sending" | "sent" | "error";
 type Mode = "evaluacion";
@@ -69,6 +70,7 @@ export function Closing({ lang }: { lang: Lang }) {
   const [status, setStatus] = useState<Status>("idle");
   const mode: Mode = "evaluacion";
   const m = t.modes[mode];
+  const spot = useSpotlight();
 
   const onSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -89,8 +91,9 @@ export function Closing({ lang }: { lang: Lang }) {
   };
 
   return (
-    <section id="contacto" className="relative scroll-mt-24 py-28 sm:py-40">
-      <div className="pointer-events-none absolute top-1/2 left-[25%] h-[420px] w-[620px] -translate-x-1/2 -translate-y-1/2 rounded-full bg-accent/[0.08] blur-[120px]" />
+    <section id="contacto" onPointerMove={spot.onPointerMove} onPointerLeave={spot.onPointerLeave} className="night-field relative scroll-mt-24 overflow-x-clip py-28 sm:py-40">
+      <SpotlightGrid gridRef={spot.grid} />
+      <div className="pointer-events-none absolute top-1/2 left-[25%] h-[420px] w-[620px] -translate-x-1/2 -translate-y-1/2 rounded-full bg-accent/[0.1] blur-[120px]" />
       <div className="relative mx-auto grid max-w-[1400px] grid-cols-1 items-start gap-12 px-6 lg:grid-cols-12 lg:gap-14 lg:px-14">
         <motion.div
           initial={{ opacity: 0, y: 24 }}
@@ -99,8 +102,11 @@ export function Closing({ lang }: { lang: Lang }) {
           transition={{ duration: 0.8, ease }}
           className="lg:col-span-5"
         >
-          <p className="text-[15px] font-semibold text-accent">{t.eyebrow}</p>
-          <h2 className="mt-4 text-[40px] leading-[1.02] font-semibold tracking-[-0.045em] text-balance sm:text-[60px]">{t.title}</h2>
+          <p className="inline-flex items-center gap-2.5 rounded-full border border-white/10 bg-white/[0.03] px-4 py-1.5 text-[14px] font-medium text-muted shadow-[inset_0_1px_0_rgba(255,255,255,0.06)] backdrop-blur-md">
+            <span className="hero-badge-dot h-1.5 w-1.5 rounded-full bg-sky" />
+            {t.eyebrow}
+          </p>
+          <h2 className="hero-ink mt-5 text-[40px] leading-[1.02] font-semibold tracking-[-0.045em] text-balance sm:text-[60px]">{t.title}</h2>
           <p className="mt-5 max-w-md text-[19px] leading-[1.6] text-muted">{m.lead}</p>
         </motion.div>
 
@@ -111,22 +117,22 @@ export function Closing({ lang }: { lang: Lang }) {
           transition={{ duration: 0.8, ease, delay: 0.1 }}
           className="lg:col-span-7 lg:pt-10"
         >
-          <form onSubmit={onSubmit} className="grid max-w-2xl gap-x-8 gap-y-6 sm:grid-cols-2">
+          <form onSubmit={onSubmit} className="grid max-w-2xl gap-x-8 gap-y-6 rounded-[20px] bg-[linear-gradient(180deg,rgba(255,255,255,0.045),rgba(255,255,255,0.015))] p-6 shadow-[inset_0_1px_0_rgba(255,255,255,0.08),0_40px_100px_-40px_rgba(0,0,0,0.95)] ring-1 ring-white/[0.08] backdrop-blur-md sm:grid-cols-2 sm:p-9">
             <input type="text" name="website" tabIndex={-1} autoComplete="off" aria-hidden className="hidden" />
             <label className="block">
-              <span className="font-semibold  text-[14px] text-faint">{t.fields.name}</span>
+              <span className="text-[14px] font-semibold text-white/45">{t.fields.name}</span>
               <input name="nombre" required autoComplete="name" className={field} placeholder={t.fields.namePh} />
             </label>
             <label className="block">
-              <span className="font-semibold  text-[14px] text-faint">{t.fields.company}</span>
+              <span className="text-[14px] font-semibold text-white/45">{t.fields.company}</span>
               <input name="empresa" required autoComplete="organization" className={field} placeholder={t.fields.companyPh} />
             </label>
             <label className="block sm:col-span-2">
-              <span className="font-semibold  text-[14px] text-faint">{t.fields.email}</span>
+              <span className="text-[14px] font-semibold text-white/45">{t.fields.email}</span>
               <input name="correo" type="email" required autoComplete="email" className={field} placeholder={t.fields.emailPh} />
             </label>
             <label className="block sm:col-span-2">
-              <span className="font-semibold  text-[14px] text-faint">{m.select}</span>
+              <span className="text-[14px] font-semibold text-white/45">{m.select}</span>
               <select name="flujo" className={`${field} appearance-none`} defaultValue={m.options[0]}>
                 {m.options.map((f) => (
                   <option key={f} value={f} className="bg-panel">
@@ -139,13 +145,13 @@ export function Closing({ lang }: { lang: Lang }) {
               <button
                 type="submit"
                 disabled={status === "sending"}
-                className="rounded-full bg-accent px-6 py-3 text-[17px] font-medium text-on-accent shadow-[0_10px_30px_-10px_rgba(37,99,255,0.36)] transition-[background-color,transform,opacity] duration-150 ease-out hover:bg-accent-hi active:scale-[0.97] disabled:opacity-70"
+                className="rounded-full bg-accent px-6 py-3 text-[17px] font-medium text-on-accent shadow-[inset_0_1px_0_rgba(255,255,255,0.3),0_0_0_1px_rgba(96,165,250,0.45),0_14px_44px_-12px_rgba(61,123,255,0.75)] transition-[background-color,transform,opacity] duration-150 ease-out hover:bg-accent-hi active:scale-[0.97] disabled:opacity-70"
               >
                 {status === "sending" ? t.sending : m.submit}
               </button>
               <span className="text-[16px] text-faint" role="status" aria-live="polite">
                 {status === "sent" ? (
-                  <span className="text-ok">{t.sent}</span>
+                  <span className="text-white">{t.sent}</span>
                 ) : status === "error" ? (
                   <span className="text-danger">
                     {t.error}{" "}
