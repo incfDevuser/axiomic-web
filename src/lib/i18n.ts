@@ -15,10 +15,9 @@ export const homeAnchor = (lang: Lang, id: string) => `${lang === "es" ? "/" : "
 
 export const fmt = (lang: Lang, n: number) => new Intl.NumberFormat(lang === "es" ? "es-CL" : "en-US").format(n);
 
-export const CLP_PER_USD = 1000;
-export const toLocal = (lang: Lang, clp: number) => (lang === "es" ? clp : clp / CLP_PER_USD);
-export const moneyShort = (lang: Lang, clp: number) => (lang === "es" ? fmt(lang, clp) : `$${fmt(lang, Math.round(toLocal(lang, clp)))}`);
-export const money = (lang: Lang, clp: number) => (lang === "es" ? `${fmt(lang, clp)} CLP` : moneyShort(lang, clp));
-export const currency = (lang: Lang) => (lang === "es" ? "CLP" : "USD");
+// Simulated amounts stay in CLP in both languages (no USD conversion).
+export const moneyShort = (lang: Lang, clp: number) => fmt(lang, clp);
+export const money = (lang: Lang, clp: number) => `${fmt(lang, clp)} CLP`;
+export const currency = () => "CLP";
 
 export const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? "https://axiomic.cl";

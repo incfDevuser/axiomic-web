@@ -1,461 +1,352 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState } from "react";
-import { useReducedMotion } from "motion/react";
+import { useRef, useState } from "react";
 import type { Discipline } from "@/lib/content";
-import type { Lang } from "@/lib/i18n";
+import { totals } from "@/lib/evidence";
+import { fmt, type Lang } from "@/lib/i18n";
 import { AgentCard } from "./AgentCard";
 import { useCase } from "./CaseContext";
+import { SpotlightGrid, useSpotlight } from "./Night";
 import { Stage, span, useProgress, useStage } from "./Stage";
 
 const copy = {
   es: {
     eyebrow: "Cómo funciona",
     title: "Así probamos a tu agente.",
-    nodes: { sandbox: "Sandbox", agent: "Tu agente", evalr: "Evaluador", evalSub: "423 controles", pass: "Aprobado", fail: "Falla", report: "Informe", reportSub: "riesgo por millón" },
+    steps: ["Sandbox", "Trampas", "Tu agente", "Veredicto"],
+    stepSub: ["Un mundo financiero simulado.", "Escondidas en documentos normales. Pásale el cursor.", "Recibe el documento y actúa, como lo haría con dinero real.", "Medimos cada decisión."],
+    docs: {
+      transferencias: "Orden de transferencia",
+      incidentes: "Reclamo de cliente",
+      asincronos: "Pago pendiente",
+      compartido: "Orden de compra",
+      "cuentas-por-pagar": "Factura de proveedor",
+    } as Record<string, string>,
+    simulated: "simulado",
+    agentName: "Tu agente de IA",
+    receives: "Recibe",
+    log: ["Lee la orden", "Decide qué hacer", "Ejecuta el pago simulado"],
+    statusIdle: "en espera",
+    statusWorking: "trabajando",
+    statusDone: "terminó",
+    checks: "controles",
+    pass: "Aprobado",
+    fail: "Falla",
+    found: "Falla medida",
+    looksFor: "Falla que buscamos",
+    rule: "Regla que la rechazaría",
+    risk: "CLP de riesgo por millón",
+    illustrative: "Escenario ilustrativo · sin cifras medidas",
   },
   en: {
     eyebrow: "How it works",
     title: "This is how we test your agent.",
-    nodes: { sandbox: "Sandbox", agent: "Your agent", evalr: "Grader", evalSub: "423 checks", pass: "Passed", fail: "Failed", report: "Report", reportSub: "risk per million" },
+    steps: ["Sandbox", "Traps", "Your agent", "Verdict"],
+    stepSub: ["A simulated financial world.", "Hidden inside ordinary documents. Hover over it.", "It gets the document and acts, as it would with real money.", "We measure every decision."],
+    docs: {
+      transferencias: "Transfer order",
+      incidentes: "Customer claim",
+      asincronos: "Pending payment",
+      compartido: "Purchase order",
+      "cuentas-por-pagar": "Supplier invoice",
+    } as Record<string, string>,
+    simulated: "simulated",
+    agentName: "Your AI agent",
+    receives: "Receives",
+    log: ["Reads the order", "Decides what to do", "Runs the simulated payment"],
+    statusIdle: "waiting",
+    statusWorking: "working",
+    statusDone: "done",
+    checks: "checks",
+    pass: "Passed",
+    fail: "Failed",
+    found: "Measured failure",
+    looksFor: "Failure we look for",
+    rule: "Rule that would reject it",
+    risk: "CLP of risk per million",
+    illustrative: "Illustrative scenario · no measured figures",
   },
 } satisfies Record<Lang, unknown>;
 
 type T = (typeof copy)["es"];
 
-const BLUE = "var(--accent)";
-const RED = "var(--danger)";
-const LIGHT = "var(--fg)";
-const IDLE = "var(--edge)";
-
-const SEG = {
-  feed: [0, 0.14],
-  hit: [0.14, 0.3],
-  order: [0.3, 0.44],
-  evalr: [0.44, 0.52],
-  result: [0.52, 0.68],
-  out: [0.68, 0.84],
+// Scroll beats (0..1 of the stage)
+const B = {
+  t12: [0.06, 0.14],
+  scan: [0.14, 0.42],
+  t23: [0.42, 0.5],
+  agent: [0.5, 0.62],
+  t34: [0.62, 0.68],
+  count: [0.68, 0.8],
+  report: [0.8, 0.88],
 } as const;
 
-type Fill = { feed: number; hit: number; order: number; result: number; out: number };
-const fills = (p: number): Fill => ({
-  feed: span(p, ...SEG.feed),
-  hit: span(p, ...SEG.hit),
-  order: span(p, ...SEG.order),
-  result: span(p, ...SEG.result),
-  out: span(p, ...SEG.out),
-});
+// The document has 7 redacted lines; three of them hide a trap.
+const LINES = 7;
+const TRAP_AT = [1, 3, 5];
+const LINE_W = [82, 64, 90, 58, 76, 70, 46];
+const DOC_H = 262;
+const lineY = (i: number) => 60 + i * 26;
 
-type Glow = "idle" | "done" | "on";
-
-function glows(p: number) {
-  const at = (on: number, off: number): Glow => (p < on ? "idle" : p < off ? "on" : "done");
-  const sit = at(SEG.hit[0], SEG.hit[1]);
-  return {
-    card: at(0, SEG.feed[1]),
-    sit,
-    agent: at(SEG.order[0], SEG.evalr[0]),
-    evalr: at(SEG.evalr[0], SEG.evalr[1]),
-    pass: at(SEG.out[0], SEG.out[1]),
-    fail: at(SEG.out[0], SEG.out[1]),
-    report: (p >= SEG.out[1] ? "on" : "idle") as Glow,
-  };
-}
-
-function Path({ d, fill, color = BLUE, width = 2.6, dashed = false }: { d: string; fill: number; color?: string; width?: number; dashed?: boolean }) {
+function StationHead({ i, t, on }: { i: number; t: T; on: boolean }) {
   return (
-    <>
-      <path d={d} style={{ stroke: IDLE }} strokeWidth={width} strokeDasharray={dashed ? "5 7" : undefined} className={dashed ? "dash-slow" : ""} />
-      <path d={d} pathLength={1} strokeDasharray="1 1" strokeDashoffset={1 - fill} strokeWidth={width + 0.6} strokeLinecap="round" style={{ stroke: color, opacity: fill > 0 ? 1 : 0, filter: `drop-shadow(0 0 6px ${color})` }} />
-    </>
+    <div className="text-center">
+      <p className="flex items-center justify-center gap-2.5">
+        <span className={`font-mono text-[14px] tabular-nums transition-colors duration-500 ${on ? "text-white" : "text-white/30"}`}>{String(i + 1).padStart(2, "0")}</span>
+        <span className={`text-[19px] font-semibold tracking-[-0.02em] transition-colors duration-500 ${on ? "text-white" : "text-white/40"}`}>{t.steps[i]}</span>
+      </p>
+      <p className={`mx-auto mt-1.5 max-w-[240px] text-[15px] leading-[1.45] text-balance transition-colors duration-500 ${on ? "text-muted" : "text-white/25"}`}>{t.stepSub[i]}</p>
+    </div>
   );
 }
 
-const hcurve = (x1: number, y1: number, x2: number, y2: number) => {
-  const k = (x2 - x1) / 2;
-  return `M${x1} ${y1} C${x1 + k} ${y1}, ${x2 - k} ${y2}, ${x2} ${y2}`;
-};
-const vcurve = (x1: number, y1: number, x2: number, y2: number) => {
-  const k = Math.max(30, (y2 - y1) / 2);
-  return `M${x1} ${y1} C${x1} ${y1 + k}, ${x2} ${y2 - k}, ${x2} ${y2}`;
-};
-
-function Icon({ children, className = "h-7 w-7" }: { children: React.ReactNode; className?: string }) {
-  return (
-    <svg viewBox="0 0 24 24" className={className} fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
-      {children}
-    </svg>
-  );
-}
-
-const glyph = {
-  alert: <path d="M12 3l9 16H3zM12 10v4M12 17v.5" />,
-  grader: <path d="M4 19h16M7 16V11M12 16V6M17 16v-3" />,
-  pass: <path d="M5 12.5l4.5 4.5L19 7.5" />,
-  fail: <path d="M7 7l10 10M17 7L7 17" />,
-  report: <path d="M6 3h9l3 3v15H6zM9 17v-3M12 17v-6M15 17v-2" />,
-  agent: <path d="M12 3v3M7 8h10a2 2 0 0 1 2 2v7a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2v-7a2 2 0 0 1 2-2zM9.5 13h.01M14.5 13h.01M9.5 16.5h5" />,
-};
-
-function Node({ x, y, size, glow, tone = "blue", shape = "rounded-[22px]", children }: { x: number; y: number; size: number; glow: Glow; tone?: "blue" | "bad"; shape?: string; children: React.ReactNode }) {
-  const bad = tone === "bad";
-  const look =
-    glow === "on"
-      ? bad
-        ? "border-danger bg-danger/10 text-danger"
-        : "border-accent bg-accent/10 text-accent"
-      : glow === "done"
-        ? bad
-          ? "border-danger/40 bg-panel text-danger/70"
-          : "border-accent/40 bg-panel text-accent/70"
-        : "border-edge bg-panel text-faint";
-  const halo = bad ? "var(--danger)" : "var(--accent)";
-  return (
-    <span
-      className={`absolute flex items-center justify-center border-2 transition-[border-color,background-color,color,box-shadow,transform] duration-300 ease-out ${shape} ${look}`}
-      style={{
-        left: x - size / 2,
-        top: y - size / 2,
-        width: size,
-        height: size,
-        boxShadow: glow === "on" ? `0 0 0 8px color-mix(in srgb, ${halo} 9%, transparent), 0 0 50px color-mix(in srgb, ${halo} 36%, transparent)` : "0 14px 30px -18px rgba(var(--shadow),calc(0.8*var(--sk)))",
-        transform: glow === "on" ? "scale(1.07)" : "scale(1)",
-      }}
-    >
-      {children}
-      {glow === "on" && <span className={`graph-pulse pointer-events-none absolute -inset-[2px] border-2 ${shape} ${bad ? "border-danger" : "border-accent"}`} />}
-    </span>
-  );
-}
-
-function Caption({ x, y, title, sub, glow, w = 200, tone = "blue" }: { x: number; y: number; title: string; sub?: string; glow: Glow; w?: number; tone?: "blue" | "bad" }) {
-  const color = glow === "on" ? (tone === "bad" ? "text-danger" : "text-fg") : glow === "done" ? "text-fg/80" : "text-muted";
-  return (
-    <span className="pointer-events-none absolute flex -translate-x-1/2 flex-col items-center text-center" style={{ left: x, top: y, width: w }}>
-      <span className={`text-[17px] leading-[1.25] font-semibold transition-colors duration-400 ${color}`}>{title}</span>
-      {sub && <span className="mt-0.5 text-[14px] text-faint">{sub}</span>}
-    </span>
-  );
-}
-
-function useFit(width: number, max: number, fit?: { height: number; reserved: number }) {
+/* 02 · a normal-looking document whose traps are written in invisible ink */
+function InkDoc({ d, t, scan }: { d: Discipline; t: T; scan: number }) {
   const ref = useRef<HTMLDivElement>(null);
-  const [scale, setScale] = useState(0.8);
-  const fitH = fit?.height;
-  const reserved = fit?.reserved ?? 0;
-  useEffect(() => {
-    const el = ref.current;
-    if (!el) return;
-    const update = () => {
-      const byWidth = el.clientWidth / width;
-      const byHeight = fitH ? (window.innerHeight - reserved) / fitH : Infinity;
-      setScale(Math.max(0.5, Math.min(max, byWidth, byHeight)));
-    };
-    update();
-    const ro = new ResizeObserver(update);
-    ro.observe(el);
-    window.addEventListener("resize", update);
-    return () => {
-      ro.disconnect();
-      window.removeEventListener("resize", update);
-    };
-  }, [width, max, fitH, reserved]);
-  return { ref, scale };
-}
+  const [uv, setUv] = useState<{ x: number; y: number } | null>(null);
+  const tests = d.sandbox?.tests ?? [];
+  const beamPx = scan * DOC_H;
+  const onMove = (e: React.PointerEvent) => {
+    if (e.pointerType !== "mouse" || !ref.current) return;
+    const r = ref.current.getBoundingClientRect();
+    setUv({ x: e.clientX - r.left, y: e.clientY - r.top });
+  };
 
-type Wires = { feed: (i: number) => string; hit: (i: number) => string; order: string; pass: string; fail: string; passOut: string; failOut: string };
-
-function Heads({ f, w, n, reduce }: { f: Fill; w: Wires; n: number; reduce: boolean }) {
-  if (reduce) return null;
-  const live: { d: string; at: number; color: string }[] = [];
-  const add = (d: string, at: number, color: string) => at > 0 && at < 1 && live.push({ d, at, color });
-  for (let i = 0; i < n; i++) {
-    add(w.feed(i), f.feed, BLUE);
-    add(w.hit(i), f.hit, RED);
-  }
-  add(w.order, f.order, LIGHT);
-  add(w.pass, f.result, BLUE);
-  add(w.fail, f.result, RED);
-  add(w.passOut, f.out, BLUE);
-  add(w.failOut, f.out, RED);
   return (
-    <>
-      {live.map(({ d, at, color }) => (
+    <div
+      ref={ref}
+      onPointerMove={onMove}
+      onPointerLeave={() => setUv(null)}
+      className="relative w-[248px] cursor-crosshair overflow-hidden rounded-[14px] bg-[linear-gradient(180deg,rgba(255,255,255,0.055),rgba(255,255,255,0.018))] px-5 pt-5 shadow-[inset_0_1px_0_rgba(255,255,255,0.1),0_40px_80px_-40px_rgba(0,0,0,1)] ring-1 ring-white/10 backdrop-blur-md"
+      style={{ height: DOC_H }}
+    >
+      <p className="font-mono text-[12px] tracking-[0.12em] text-white/45 uppercase">{t.docs[d.id] ?? d.name}</p>
+      <div className="mt-2 h-px bg-white/10" />
+      {Array.from({ length: LINES }, (_, i) => {
+        const trap = TRAP_AT.indexOf(i);
+        const y = lineY(i);
+        const shown = trap >= 0 && ((scan > 0 && beamPx >= y + 8) || (uv !== null && Math.abs(uv.y - y) < 32));
+        return (
+          <div key={i} className="absolute right-5 left-5 h-[18px]" style={{ top: y - 9 }}>
+            <span className="absolute inset-y-[4px] left-0 rounded-full bg-white/[0.09] transition-opacity duration-500" style={{ width: `${LINE_W[i]}%`, opacity: shown ? 0 : 1 }} />
+            {trap >= 0 && (
+              <span
+                className="absolute inset-0 flex items-center gap-1.5 overflow-hidden text-[13px] font-semibold whitespace-nowrap text-white transition-[opacity,filter] duration-500"
+                style={{ opacity: shown ? 1 : 0, filter: shown ? "blur(0px)" : "blur(6px)", textShadow: "0 0 14px rgba(255,255,255,0.55)" }}
+              >
+                <span className="text-white/55">⚠</span>
+                <span className="truncate">{tests[trap]}</span>
+              </span>
+            )}
+          </div>
+        );
+      })}
+      <p className="absolute right-5 bottom-4 left-5 flex justify-between font-mono text-[12px] text-white/30">
+        <span>{d.mandate}</span>
+        <span>{t.simulated}</span>
+      </p>
+
+      {scan > 0 && scan < 1 && (
+        <span aria-hidden className="pointer-events-none absolute inset-x-0" style={{ top: beamPx }}>
+          <span className="absolute inset-x-0 -top-12 h-12 bg-gradient-to-b from-transparent to-white/[0.07]" />
+          <span className="absolute inset-x-0 top-0 h-[2px] bg-white shadow-[0_0_18px_rgba(255,255,255,0.9),0_0_40px_rgba(147,197,253,0.6)]" />
+        </span>
+      )}
+      {uv && (
         <span
-          key={d}
-          className="absolute top-0 left-0 h-[12px] w-[12px] rounded-full"
-          style={{ offsetPath: `path("${d}")`, offsetDistance: `${at * 100}%`, offsetRotate: "0deg", backgroundColor: color, boxShadow: `0 0 20px ${color}, 0 0 6px ${color}` } as React.CSSProperties}
+          aria-hidden
+          className="pointer-events-none absolute h-[150px] w-[150px] -translate-x-1/2 -translate-y-1/2 rounded-full bg-[radial-gradient(closest-side,rgba(147,197,253,0.18),transparent)]"
+          style={{ left: uv.x, top: uv.y }}
         />
-      ))}
-    </>
+      )}
+    </div>
   );
 }
 
-const HW = 1240;
-const HH = 560;
-const HP = {
-  card: { x: 90, y: 280 },
-  sits: [
-    { x: 330, y: 120 },
-    { x: 330, y: 280 },
-    { x: 330, y: 440 },
-  ],
-  agent: { x: 580, y: 280 },
-  evalr: { x: 790, y: 280 },
-  pass: { x: 985, y: 190 },
-  fail: { x: 985, y: 370 },
-  report: { x: 1165, y: 280 },
-};
-const hw = {
-  feed: (i: number) => hcurve(HP.card.x + 72, HP.card.y, HP.sits[i].x - 32, HP.sits[i].y),
-  hit: (i: number) => hcurve(HP.sits[i].x + 32, HP.sits[i].y, HP.agent.x - 56, HP.agent.y),
-  order: hcurve(HP.agent.x + 56, HP.agent.y, HP.evalr.x - 40, HP.evalr.y),
-  pass: hcurve(HP.evalr.x + 40, HP.evalr.y, HP.pass.x - 34, HP.pass.y),
-  fail: hcurve(HP.evalr.x + 40, HP.evalr.y, HP.fail.x - 34, HP.fail.y),
-  passOut: hcurve(HP.pass.x + 34, HP.pass.y, HP.report.x - 38, HP.report.y),
-  failOut: hcurve(HP.fail.x + 34, HP.fail.y, HP.report.x - 38, HP.report.y),
-};
-
-function Wide({ d, lang, t, p, situations, reduce }: { d: Discipline; lang: Lang; t: T; p: number; situations: string[]; reduce: boolean }) {
-  const { ref, scale } = useFit(HW, 1.1, { height: HH, reserved: 400 });
-  const f = fills(p);
-  const g = glows(p);
-
+/* 03 · the agent at work: a small agent window that receives the document and acts on it */
+function AgentWindow({ d, t, k, on }: { d: Discipline; t: T; k: number; on: boolean }) {
+  const steps = [`${t.receives}: ${t.docs[d.id] ?? d.name}`, ...t.log];
+  const status = k >= 1 ? t.statusDone : on ? t.statusWorking : t.statusIdle;
   return (
-    <div ref={ref} className="w-full">
-      <div className="mx-auto" style={{ width: HW * scale, height: HH * scale }}>
-        <div className="relative" style={{ width: HW, height: HH, transform: `scale(${scale})`, transformOrigin: "top left" }}>
-          <svg className="absolute inset-0 overflow-visible" width={HW} height={HH} viewBox={`0 0 ${HW} ${HH}`} fill="none" aria-hidden>
-            {situations.map((_, i) => (
-              <Path key={`f${i}`} d={hw.feed(i)} fill={f.feed} dashed />
-            ))}
-            {situations.map((_, i) => (
-              <Path key={`h${i}`} d={hw.hit(i)} fill={f.hit} color={RED} dashed />
-            ))}
-            <Path d={hw.order} fill={f.order} color={LIGHT} />
-            <Path d={hw.pass} fill={f.result} />
-            <Path d={hw.fail} fill={f.result} color={RED} />
-            <Path d={hw.passOut} fill={f.out} />
-            <Path d={hw.failOut} fill={f.out} color={RED} />
+    <div
+      className={`w-[268px] overflow-hidden rounded-[14px] bg-[linear-gradient(180deg,rgba(20,28,48,0.92),rgba(7,10,18,0.96))] ring-1 backdrop-blur-md transition-[box-shadow] duration-700 ${
+        on ? "shadow-[inset_0_1px_0_rgba(255,255,255,0.1),0_0_60px_-10px_rgba(61,123,255,0.45)] ring-accent/40" : "shadow-[inset_0_1px_0_rgba(255,255,255,0.08),0_40px_80px_-40px_rgba(0,0,0,1)] ring-white/10"
+      }`}
+    >
+      <div className="flex items-center gap-2.5 border-b border-white/[0.07] px-4 py-3">
+        <span className={`flex h-7 w-7 items-center justify-center rounded-[8px] transition-colors duration-500 ${on ? "bg-accent/20 text-accent-hi" : "bg-white/[0.06] text-white/40"}`}>
+          <svg viewBox="0 0 24 24" className="h-[18px] w-[18px]" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+            <path d="M12 3v3M7 8h10a2 2 0 0 1 2 2v7a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2v-7a2 2 0 0 1 2-2zM9.5 13h.01M14.5 13h.01M9.5 16.5h5" />
           </svg>
-
-          <Heads f={f} w={hw} n={situations.length} reduce={reduce} />
-
-          <Node x={HP.card.x} y={HP.card.y} size={144} glow={g.card} shape="rounded-[28px]">
-            <span className="w-[66px] rotate-[-6deg]">
-              <AgentCard discipline={d} lang={lang} sandbox />
-            </span>
-          </Node>
-          <Caption x={HP.card.x} y={HP.card.y + 86} title={t.nodes.sandbox} sub={d.name} glow={g.card} />
-
-          {situations.map((txt, i) => {
-            const q = HP.sits[i];
-            return (
-              <span key={txt} className="absolute" style={{ left: q.x - 34, top: q.y - 34, width: 68, height: 68 }}>
-                <Node x={34} y={34} size={64} glow={g.sit} tone="bad" shape="rounded-full">
-                  <Icon>{glyph.alert}</Icon>
-                </Node>
+        </span>
+        <span className={`text-[15px] font-semibold transition-colors duration-500 ${on ? "text-white" : "text-white/45"}`}>{t.agentName}</span>
+        <span className={`ml-auto flex items-center gap-1.5 text-[12px] transition-colors duration-500 ${on ? "text-white/60" : "text-white/30"}`}>
+          <span className={`h-1.5 w-1.5 rounded-full ${k >= 1 ? "bg-white/60" : on ? "breathe bg-accent" : "bg-white/20"}`} />
+          {status}
+        </span>
+      </div>
+      <ol className="space-y-2 px-4 py-3.5 text-[14px]">
+        {steps.map((l, i) => {
+          const at = i / steps.length;
+          const state = !on ? "idle" : k >= at + 1 / steps.length ? "done" : k >= at ? "active" : "idle";
+          return (
+            <li key={l} className="flex items-center gap-2.5">
+              <span
+                className={`flex h-4 w-4 shrink-0 items-center justify-center rounded-full text-[10px] transition-colors duration-300 ${
+                  state === "done" ? "bg-white/15 text-white" : state === "active" ? "border border-accent text-accent" : "border border-white/15 text-transparent"
+                }`}
+              >
+                {state === "done" ? "✓" : state === "active" ? <span className="breathe h-1.5 w-1.5 rounded-full bg-accent" /> : ""}
               </span>
-            );
-          })}
-          {situations.map((txt, i) => (
-            <span
-              key={`l${txt}`}
-              className={`pointer-events-none absolute flex w-[160px] -translate-x-1/2 justify-center text-center text-[16px] leading-[1.25] font-semibold text-balance transition-colors duration-400 ${
-                g.sit === "on" ? "text-danger" : g.sit === "done" ? "text-fg/80" : "text-muted"
-              } ${i === 2 ? "" : "-translate-y-full"}`}
-              style={{ left: HP.sits[i].x, top: i === 2 ? HP.sits[i].y + 42 : HP.sits[i].y - 42 }}
-            >
-              {txt}
-            </span>
-          ))}
+              <span className={`truncate transition-colors duration-300 ${state === "idle" ? "text-white/30" : state === "active" ? "text-white" : "text-white/70"}`}>{l}</span>
+            </li>
+          );
+        })}
+      </ol>
+    </div>
+  );
+}
 
-          <Node x={HP.agent.x} y={HP.agent.y} size={104} glow={g.agent} shape="rounded-t-[52px] rounded-b-[24px]">
-            <Icon className="h-11 w-11">{glyph.agent}</Icon>
-          </Node>
-          <Caption x={HP.agent.x} y={HP.agent.y + 66} title={t.nodes.agent} glow={g.agent} />
+/* 04 · the verdict: every check counted, then the report line */
+function Verdict({ d, t, count, report, lang }: { d: Discipline; t: T; count: number; report: number; lang: Lang }) {
+  const R = 52;
+  const C = 2 * Math.PI * R;
+  const done = count >= 1;
+  return (
+    <div className="flex flex-col items-center">
+      <span className="relative flex h-[120px] w-[120px] items-center justify-center">
+        <svg viewBox="0 0 120 120" className="absolute inset-0 -rotate-90" aria-hidden>
+          <circle cx="60" cy="60" r={R} fill="none" stroke="rgba(255,255,255,0.08)" strokeWidth="2" />
+          <circle
+            cx="60"
+            cy="60"
+            r={R}
+            fill="none"
+            stroke="#ffffff"
+            strokeWidth="2"
+            strokeLinecap="round"
+            strokeDasharray={C}
+            strokeDashoffset={C * (1 - count)}
+            style={{ opacity: count > 0 ? 1 : 0, filter: "drop-shadow(0 0 6px rgba(255,255,255,0.8))" }}
+          />
+        </svg>
+        <span className="text-center">
+          <span className={`block text-[26px] leading-none font-semibold tabular-nums transition-colors duration-300 ${count > 0 ? "text-white" : "text-white/30"}`}>
+            {fmt(lang, Math.round(totals.checks * count))}
+          </span>
+          <span className="mt-1 block text-[13px] text-white/45">{t.checks}</span>
+        </span>
+      </span>
 
-          <Node x={HP.evalr.x} y={HP.evalr.y} size={80} glow={g.evalr}>
-            <Icon className="h-8 w-8">{glyph.grader}</Icon>
-          </Node>
-          <Caption x={HP.evalr.x} y={HP.evalr.y + 54} title={t.nodes.evalr} sub={t.nodes.evalSub} glow={g.evalr} />
+      <div className="mt-4 flex gap-5">
+        <span className="text-[15px] font-semibold text-white/30">✓ {t.pass}</span>
+        <span
+          className={`text-[15px] font-semibold transition-[color,text-shadow] duration-500 ${done ? "text-white [text-shadow:0_0_16px_rgba(255,255,255,0.6)]" : "text-white/30"}`}
+        >
+          ✕ {t.fail}
+        </span>
+      </div>
 
-          <Node x={HP.pass.x} y={HP.pass.y} size={68} glow={g.pass} shape="rounded-full">
-            <Icon>{glyph.pass}</Icon>
-          </Node>
-          <Caption x={HP.pass.x} y={HP.pass.y - 72} title={t.nodes.pass} glow={g.pass} w={140} />
-
-          <Node x={HP.fail.x} y={HP.fail.y} size={68} glow={g.fail} tone="bad" shape="rounded-full">
-            <Icon>{glyph.fail}</Icon>
-          </Node>
-          <Caption x={HP.fail.x} y={HP.fail.y + 44} title={t.nodes.fail} glow={g.fail} w={140} tone="bad" />
-
-          <Node x={HP.report.x} y={HP.report.y} size={76} glow={g.report}>
-            <Icon className="h-8 w-8">{glyph.report}</Icon>
-          </Node>
-          <Caption x={HP.report.x} y={HP.report.y + 50} title={t.nodes.report} sub={t.nodes.reportSub} glow={g.report} w={150} />
-        </div>
+      <div className="mt-4 w-[280px] text-center transition-[opacity,transform] duration-700" style={{ opacity: report, transform: `translateY(${(1 - report) * 8}px)` }}>
+        <p className="text-[14px] text-white/45">{d.example ? t.looksFor : t.found}</p>
+        <p className="mt-0.5 text-[15px] leading-[1.4] font-semibold text-balance text-white">{d.failure}</p>
+        <p className="mt-2 text-[14px] text-white/45">{t.rule}</p>
+        <p className="mt-0.5 text-[15px] leading-[1.4] text-balance text-accent-hi">{d.rule}</p>
+        <p className="mt-2 text-[13px] text-white/35">{d.example ? t.illustrative : `${d.riskPerMillion} ${t.risk}`}</p>
       </div>
     </div>
   );
 }
 
-const VW = 400;
-const VH = 990;
-const VX = VW / 2;
-const VP = {
-  card: { x: VX, y: 80 },
-  sits: [
-    { x: 70, y: 260 },
-    { x: VX, y: 260 },
-    { x: 330, y: 260 },
-  ],
-  agent: { x: VX, y: 530 },
-  evalr: { x: VX, y: 685 },
-  pass: { x: 110, y: 815 },
-  fail: { x: 290, y: 815 },
-  report: { x: VX, y: 935 },
-};
-const SIT_LABEL = 128;
-const hitFrom = (labelH?: number) => (labelH ? 30 + 8 + labelH + 10 : SIT_LABEL);
-const vw = {
-  feed: (i: number) => vcurve(VP.card.x, VP.card.y + 62, VP.sits[i].x, VP.sits[i].y - 30),
-  hit: (i: number, labelH?: number) => vcurve(VP.sits[i].x, VP.sits[i].y + hitFrom(labelH), VP.agent.x, VP.agent.y - 50),
-  order: vcurve(VP.agent.x, VP.agent.y + 50, VP.evalr.x, VP.evalr.y - 36),
-  pass: vcurve(VP.evalr.x, VP.evalr.y + 36, VP.pass.x, VP.pass.y - 30),
-  fail: vcurve(VP.evalr.x, VP.evalr.y + 36, VP.fail.x, VP.fail.y - 30),
-  passOut: vcurve(VP.pass.x, VP.pass.y + 30, VP.report.x, VP.report.y - 32),
-  failOut: vcurve(VP.fail.x, VP.fail.y + 30, VP.report.x, VP.report.y - 32),
-};
+const THREAD_Y = 131;
 
-function Tall({ d, lang, t, p, situations, reduce }: { d: Discipline; lang: Lang; t: T; p: number; situations: string[]; reduce: boolean }) {
-  const { ref, scale } = useFit(VW, 1);
-  const f = fills(p);
-  const g = glows(p);
+function Chamber({ d, t, p, lang }: { d: Discipline; t: T; p: number; lang: Lang }) {
+  const legs = [span(p, ...B.t12), span(p, ...B.t23), span(p, ...B.t34)];
+  const lit = [true, legs[0] >= 1, legs[1] >= 1, legs[2] >= 1];
+  const filled = (legs[0] + legs[1] + legs[2]) / 3;
+  const moving = legs.findIndex((k) => k > 0 && k < 1);
+  const tokenX = moving < 0 ? null : 12.5 + (moving + legs[moving]) * 25;
 
-  const labels = useRef<(HTMLSpanElement | null)[]>([]);
-  const [labelH, setLabelH] = useState<number[]>([]);
-  useEffect(() => {
-    const els = labels.current.filter((el): el is HTMLSpanElement => !!el);
-    const ro = new ResizeObserver(() => setLabelH(labels.current.map((el) => el?.offsetHeight ?? 0)));
-    els.forEach((el) => ro.observe(el));
-    return () => ro.disconnect();
-  }, [situations]);
-  const tw = useMemo(() => ({ ...vw, hit: (i: number) => vw.hit(i, labelH[i]) }), [labelH]);
+  const stations = [
+    <span key="card" className="block w-[118px] rotate-[-6deg] drop-shadow-[0_30px_40px_rgba(0,0,0,0.8)]">
+      <AgentCard discipline={d} lang={lang} sandbox />
+    </span>,
+    <InkDoc key="doc" d={d} t={t} scan={span(p, ...B.scan)} />,
+    <AgentWindow key="agent" d={d} t={t} k={span(p, ...B.agent)} on={lit[2]} />,
+    <Verdict key="verdict" d={d} t={t} count={span(p, ...B.count)} report={span(p, ...B.report)} lang={lang} />,
+  ];
 
   return (
-    <div ref={ref} className="w-full">
-      <div className="mx-auto" style={{ width: VW * scale, height: VH * scale }}>
-        <div className="relative" style={{ width: VW, height: VH, transform: `scale(${scale})`, transformOrigin: "top left" }}>
-          <svg className="absolute inset-0 overflow-visible" width={VW} height={VH} viewBox={`0 0 ${VW} ${VH}`} fill="none" aria-hidden>
-            {situations.map((_, i) => (
-              <Path key={`f${i}`} d={vw.feed(i)} fill={f.feed} dashed />
-            ))}
-            {situations.map((_, i) => (
-              <Path key={`h${i}`} d={tw.hit(i)} fill={f.hit} color={RED} dashed />
-            ))}
-            <Path d={vw.order} fill={f.order} color={LIGHT} />
-            <Path d={vw.pass} fill={f.result} />
-            <Path d={vw.fail} fill={f.result} color={RED} />
-            <Path d={vw.passOut} fill={f.out} />
-            <Path d={vw.failOut} fill={f.out} color={RED} />
-          </svg>
+    <div>
+      {/* step names in one row (desktop) */}
+      <div className="hidden grid-cols-4 gap-6 lg:grid">
+        {t.steps.map((_, i) => (
+          <StationHead key={i} i={i} t={t} on={lit[i]} />
+        ))}
+      </div>
 
-          <Heads f={f} w={tw} n={situations.length} reduce={reduce} />
+      <div className="relative lg:mt-5">
+        {/* the light thread through every station (desktop) */}
+        <div aria-hidden className="pointer-events-none absolute right-[12.5%] left-[12.5%] hidden h-px bg-white/[0.08] lg:block" style={{ top: THREAD_Y }}>
+          <div className="h-full origin-left bg-gradient-to-r from-accent via-accent-hi to-white shadow-[0_0_12px_rgba(96,165,250,0.9)]" style={{ transform: `scaleX(${filled})` }} />
+        </div>
+        {tokenX !== null && (
+          <span
+            aria-hidden
+            className="pointer-events-none absolute z-10 hidden h-[16px] w-[12px] -translate-x-1/2 -translate-y-1/2 rounded-[2px] bg-white shadow-[0_0_18px_rgba(255,255,255,0.9),0_0_40px_rgba(96,165,250,0.8)] lg:block"
+            style={{ left: `${tokenX}%`, top: THREAD_Y }}
+          />
+        )}
 
-          <Node x={VP.card.x} y={VP.card.y} size={120} glow={g.card} shape="rounded-[26px]">
-            <span className="w-[54px] rotate-[-6deg]">
-              <AgentCard discipline={d} lang={lang} sandbox />
-            </span>
-          </Node>
-
-          {situations.map((txt, i) => {
-            const q = VP.sits[i];
-            const glow = g.sit;
-            return (
-              <span key={txt} className="absolute flex flex-col items-center" style={{ left: q.x - 61, top: q.y - 30, width: 122 }}>
-                <span className="relative h-[60px] w-[60px]">
-                  <Node x={30} y={30} size={60} glow={glow} tone="bad" shape="rounded-full">
-                    <Icon className="h-6 w-6">{glyph.alert}</Icon>
-                  </Node>
+        <div className="grid grid-cols-1 gap-20 lg:grid-cols-4 lg:gap-6">
+          {stations.map((node, i) => (
+            <div key={i} className="relative flex flex-col items-center">
+              {i > 0 && (
+                <span aria-hidden className="absolute -top-14 left-1/2 h-9 w-px -translate-x-1/2 bg-white/10 lg:hidden">
+                  <span className="block h-full origin-top bg-accent" style={{ transform: `scaleY(${legs[i - 1]})` }} />
                 </span>
-                <span
-                  ref={(el) => {
-                    labels.current[i] = el;
-                  }}
-                  className={`mt-2 text-[14px] leading-[1.2] font-semibold text-balance ${glow === "on" ? "text-danger" : glow === "done" ? "text-fg/80" : "text-muted"}`}>{txt}</span>
-              </span>
-            );
-          })}
-
-          <Node x={VP.agent.x} y={VP.agent.y} size={96} glow={g.agent} shape="rounded-t-[48px] rounded-b-[22px]">
-            <Icon className="h-10 w-10">{glyph.agent}</Icon>
-          </Node>
-          <Caption x={VP.agent.x + 130} y={VP.agent.y - 12} title={t.nodes.agent} glow={g.agent} w={120} />
-
-          <Node x={VP.evalr.x} y={VP.evalr.y} size={72} glow={g.evalr}>
-            <Icon>{glyph.grader}</Icon>
-          </Node>
-          <Caption x={VP.evalr.x + 120} y={VP.evalr.y - 20} title={t.nodes.evalr} sub={t.nodes.evalSub} glow={g.evalr} w={130} />
-
-          <Node x={VP.pass.x} y={VP.pass.y} size={60} glow={g.pass} shape="rounded-full">
-            <Icon>{glyph.pass}</Icon>
-          </Node>
-          <Caption x={VP.pass.x - 80} y={VP.pass.y - 12} title={t.nodes.pass} glow={g.pass} w={100} />
-
-          <Node x={VP.fail.x} y={VP.fail.y} size={60} glow={g.fail} tone="bad" shape="rounded-full">
-            <Icon>{glyph.fail}</Icon>
-          </Node>
-          <Caption x={VP.fail.x + 70} y={VP.fail.y - 12} title={t.nodes.fail} glow={g.fail} w={80} tone="bad" />
-
-          <Node x={VP.report.x} y={VP.report.y} size={64} glow={g.report}>
-            <Icon>{glyph.report}</Icon>
-          </Node>
-          <Caption x={VP.report.x + 110} y={VP.report.y - 12} title={t.nodes.report} glow={g.report} w={120} />
+              )}
+              <div className="mb-6 lg:hidden">
+                <StationHead i={i} t={t} on={lit[i]} />
+              </div>
+              {/* every visual is centred on the thread: boxes of THREAD_Y*2, or a 120px disc whose centre sits on it */}
+              <div
+                className={`flex w-full items-center justify-center ${i === 3 ? "lg:items-start lg:pt-[var(--pt)]" : ""}`}
+                style={{ minHeight: i < 3 ? THREAD_Y * 2 : undefined, "--pt": `${i === 3 ? THREAD_Y - 60 : 0}px` } as React.CSSProperties}
+              >
+                {node}
+              </div>
+            </div>
+          ))}
         </div>
       </div>
     </div>
   );
-}
-
-function Run({ d, lang, p, wide }: { d: Discipline; lang: Lang; p: number; wide: boolean }) {
-  const t = copy[lang];
-  const reduce = !!useReducedMotion();
-  const situations = d.sandbox?.tests ?? [];
-  return wide ? <Wide d={d} lang={lang} t={t} p={p} situations={situations} reduce={reduce} /> : <Tall d={d} lang={lang} t={t} p={p} situations={situations} reduce={reduce} />;
-}
-
-function useWide() {
-  const [wide, setWide] = useState(false);
-  useEffect(() => {
-    const mq = window.matchMedia("(min-width: 1024px)");
-    const update = () => setWide(mq.matches);
-    update();
-    mq.addEventListener("change", update);
-    return () => mq.removeEventListener("change", update);
-  }, []);
-  return wide;
 }
 
 export function Arena() {
-  const { current, run, choose, disciplines, lang } = useCase();
+  const { current, choose, disciplines, lang } = useCase();
   const t = copy[lang];
-  const wide = useWide();
   const { ref: stageRef, pin, reduce, progress } = useStage();
   const p = useProgress(progress, reduce);
+  const spot = useSpotlight();
 
   return (
-    <section id="como-funciona" className="zone-light zone-fade relative scroll-mt-24 overflow-clip">
-      <div className="graph-canvas pointer-events-none absolute inset-0" />
-
-      <Stage stageRef={stageRef} pin={pin} length={2.8} className="pt-20">
+    <section
+      id="como-funciona"
+      onPointerMove={spot.onPointerMove}
+      onPointerLeave={spot.onPointerLeave}
+      className={`night-field relative scroll-mt-24 overflow-clip ${pin ? "" : "py-24 sm:py-32"}`}
+    >
+      <Stage stageRef={stageRef} pin={pin} length={3} className="pt-20">
+        <SpotlightGrid gridRef={spot.grid} />
+        <div aria-hidden className="pointer-events-none absolute top-[58%] left-1/2 h-[520px] w-[1100px] max-w-[110vw] -translate-x-1/2 -translate-y-1/2 rounded-full bg-[radial-gradient(closest-side,rgba(61,123,255,0.09),transparent)] blur-2xl" />
         <div className="relative mx-auto w-full max-w-[1400px] px-6 lg:px-14">
           <div className="text-center">
-            <p className="text-[15px] font-semibold text-accent">{t.eyebrow}</p>
-            <h2 className="mt-3 text-[36px] leading-[1.08] font-semibold tracking-[-0.045em] sm:text-[52px]">{t.title}</h2>
+            <h2 className="hero-ink text-[36px] leading-[1.08] font-semibold tracking-[-0.045em] sm:text-[48px]">{t.title}</h2>
           </div>
 
-          <div className="mt-8 flex flex-wrap justify-center gap-2 sm:gap-2.5">
+          <div className="mt-6 flex flex-wrap justify-center gap-x-6 gap-y-1 sm:gap-x-8">
             {disciplines.map((d) => {
               const on = d.id === current.id;
               return (
@@ -464,28 +355,22 @@ export function Arena() {
                   type="button"
                   onClick={() => choose(d.id)}
                   aria-pressed={on}
-                  className={`flex shrink-0 items-center gap-2.5 rounded-full border py-1.5 pr-4 pl-3 sm:gap-3 sm:py-2 sm:pr-5 sm:pl-4 transition-[border-color,background-color,transform] duration-200 ease-out active:scale-[0.97] ${
-                    on ? "border-accent bg-accent/10" : "border-edge bg-panel hover:border-faint"
-                  }`}
+                  className={`relative flex shrink-0 items-center gap-2.5 py-2 transition-[opacity,transform] duration-200 ease-out active:scale-[0.97] sm:gap-3 ${on ? "opacity-100" : "opacity-55 hover:opacity-90"}`}
                 >
                   <span className="w-[18px] shrink-0">
                     <AgentCard discipline={d} lang={lang} sandbox />
                   </span>
-                  <span className={`text-[14px] font-semibold whitespace-nowrap sm:text-[15px] ${on ? "text-accent" : "text-fg"}`}>{d.name}</span>
+                  <span className={`text-[14px] font-semibold whitespace-nowrap sm:text-[15px] ${on ? "text-fg" : "text-muted"}`}>{d.name}</span>
+                  {on && <span aria-hidden className="absolute inset-x-0 -bottom-0.5 h-px bg-white shadow-[0_0_8px_rgba(255,255,255,0.8)]" />}
                 </button>
               );
             })}
           </div>
 
-          <div className="mt-10 lg:mt-8">
-            <Run key={`${current.id}-${run}`} d={current} lang={lang} p={p} wide={wide} />
+          <div className="mt-12 lg:mt-8">
+            <Chamber key={current.id} d={current} t={t} p={p} lang={lang} />
           </div>
 
-          {pin && (
-            <div className="mx-auto mt-6 h-1 w-40 overflow-hidden rounded-full bg-edge">
-              <div className="h-full origin-left rounded-full bg-accent" style={{ transform: `scaleX(${span(p, 0, SEG.out[1])})` }} />
-            </div>
-          )}
         </div>
       </Stage>
     </section>

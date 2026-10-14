@@ -69,39 +69,27 @@ function Contactless() {
 }
 
 const labels = {
-  es: { blocked: "Bloqueado", risk: "Riesgo", cur: "CLP", perMillion: "CLP / millón", example: "ejemplo", episodes: "episodios", untested: "por probar", mandate: "MANDATO",
-    report: "Informe", sandbox: "Sandbox", simulates: "Qué simula", tests: "Qué pone a prueba", with: "Con qué", looksFor: "Falla que buscamos", scenarios: "Escenarios", failures: "Fallas", where: "Dónde falló", rule: "Regla que lo bloquea", riskPerMillion: "Riesgo por millón", exampleFigures: "Cifras de ejemplo", openFlow: "Ver en el flujo →" },
-  en: { blocked: "Blocked", risk: "Risk", cur: "USD", perMillion: "USD / million", example: "example", episodes: "episodes", untested: "to be tested", mandate: "MANDATE",
-    report: "Report", sandbox: "Sandbox", simulates: "What it simulates", tests: "What it tests", with: "With", looksFor: "Failure we look for", scenarios: "Scenarios", failures: "Failures", where: "Where it failed", rule: "Rule that blocks it", riskPerMillion: "Risk per million", exampleFigures: "Example figures", openFlow: "See it in the flow →" },
+  es: { risk: "Riesgo", cur: "CLP", perMillion: "CLP / millón", measured: "medición 09 · simulado", illustrative: "Escenario ilustrativo", episodes: "episodios", untested: "sin cifras medidas", mandate: "MANDATO",
+    report: "Informe", sandbox: "Sandbox", simulates: "Qué simula", tests: "Qué pone a prueba", with: "Con qué", looksFor: "Falla que buscamos", found: "Falla medida", scenarios: "Episodios", failures: "Fallas", where: "Dónde falló", rule: "Regla que la rechazaría", gateway: "Rechazada por la pasarela v0 · en simulación", riskPerMillion: "Riesgo por millón", illustrativeNote: "Escenario ilustrativo · sin cifras medidas", openFlow: "Ver en el flujo →" },
+  en: { risk: "Risk", cur: "CLP", perMillion: "CLP / million", measured: "measurement 09 · simulated", illustrative: "Illustrative scenario", episodes: "episodes", untested: "no measured figures", mandate: "MANDATE",
+    report: "Report", sandbox: "Sandbox", simulates: "What it simulates", tests: "What it tests", with: "With", looksFor: "Failure we look for", found: "Measured failure", scenarios: "Episodes", failures: "Failures", where: "Where it failed", rule: "Rule that would reject it", gateway: "Rejected by gateway v0 · in simulation", riskPerMillion: "Risk per million", illustrativeNote: "Illustrative scenario · no measured figures", openFlow: "See it in the flow →" },
 } satisfies Record<Lang, Record<string, string>>;
 
 function Stamp({ discipline, lang }: { discipline: Discipline; lang: Lang }) {
   const l = labels[lang];
-  const r = discipline.result;
-  if (!r) return null;
-  const blocked = r.kind === "blocked";
+  if (discipline.example) return null;
   return (
-    <div
-      className={`card-stamp absolute top-[47%] right-[6cqw] rotate-[-9deg] rounded-[1.6cqw] border-[0.7cqw] px-[2.4cqw] py-[1.4cqw] text-center font-mono uppercase ${
-        blocked ? "card-stamp-red" : "card-stamp-ink"
-      }`}
-    >
-      {blocked ? (
-        <div className="text-[5.6cqw] leading-none font-bold tracking-[0.12em]">{l.blocked}</div>
-      ) : (
-        <>
-          <div className="text-[2.8cqw] leading-none tracking-[0.18em]">{l.risk}</div>
-          <div className="mt-[0.8cqw] text-[4.6cqw] leading-none font-bold">{r.perMillion}</div>
-          <div className="mt-[0.6cqw] text-[2.6cqw] leading-none tracking-[0.1em]">{l.perMillion}</div>
-        </>
-      )}
-      {discipline.example && <div className="mt-[1cqw] text-[2.3cqw] leading-none tracking-[0.2em] opacity-75">{l.example}</div>}
+    <div className="card-stamp card-stamp-ink absolute top-[47%] right-[6cqw] rotate-[-9deg] rounded-[1.6cqw] border-[0.7cqw] px-[2.4cqw] py-[1.4cqw] text-center font-mono uppercase">
+      <div className="text-[2.8cqw] leading-none tracking-[0.18em]">{l.risk}</div>
+      <div className="mt-[0.8cqw] text-[4.6cqw] leading-none font-bold">{discipline.riskPerMillion}</div>
+      <div className="mt-[0.6cqw] text-[2.6cqw] leading-none tracking-[0.1em]">{l.perMillion}</div>
+      <div className="mt-[1cqw] text-[2.2cqw] leading-none tracking-[0.14em] opacity-75">{l.measured}</div>
     </div>
   );
 }
 
 export function AgentCard({ discipline, interactive = false, lang = "es", sandbox = false }: { discipline: Discipline; interactive?: boolean; lang?: Lang; sandbox?: boolean }) {
-  const { theme, name, mandate, agent, version, episode, episodes } = discipline;
+  const { theme, name, mandate, agent, episode, episodes, example } = discipline;
   const l = labels[lang];
   const ref = useRef<HTMLDivElement>(null);
 
@@ -154,17 +142,26 @@ export function AgentCard({ discipline, interactive = false, lang = "es", sandbo
             <div className="h-[20cqw] w-[15.2cqw] drop-shadow-[0_1px_0.5px_rgba(0,0,0,0.35)]">
               <Chip />
             </div>
-            <div className="laser text-right font-mono leading-tight">
-              <div className="text-[4.6cqw] tracking-[0.08em]">{episode}</div>
-              <div className="text-[3.2cqw] opacity-70">{episodes > 0 ? `${episodes} ${l.episodes}` : l.untested}</div>
+            <div className="laser max-w-[52cqw] text-right font-mono leading-tight">
+              {example ? (
+                <>
+                  <div className="text-[3.4cqw] leading-[1.15] tracking-[0.06em] uppercase">{l.illustrative}</div>
+                  <div className="mt-[0.6cqw] text-[2.9cqw] opacity-70">{l.untested}</div>
+                </>
+              ) : (
+                <>
+                  <div className="text-[4.2cqw] tracking-[0.08em] uppercase">{episode}</div>
+                  <div className="text-[3.2cqw] opacity-70">{`${episodes} ${l.episodes}`}</div>
+                </>
+              )}
             </div>
           </div>
 
           <Stamp discipline={discipline} lang={lang} />
 
           <div className="mt-auto">
-            <div className="laser text-[3.3cqw] font-medium tracking-[0.18em] uppercase opacity-75">
-              {sandbox ? l.sandbox : `${agent} · ${version}`}
+            <div className="laser truncate text-[3.3cqw] font-medium tracking-[0.18em] uppercase opacity-75">
+              {sandbox || !agent ? l.sandbox : agent}
             </div>
             <div className="laser mt-[1.2cqw] text-[6.8cqw] leading-[1.12] font-semibold uppercase tracking-[0.05em]">{name}</div>
 
@@ -201,7 +198,7 @@ export function CardBack({
   lang?: Lang;
   mode?: "report" | "sandbox";
 }) {
-  const { theme, episode, agent, version, episodes, failures, failure, rule, riskPerMillion, example } = discipline;
+  const { theme, episode, agent, episodes, failures, failure, rule, riskPerMillion, example } = discipline;
   const l = labels[lang];
   const box = discipline.sandbox;
   const openButton = onOpenFlow && (
@@ -251,8 +248,10 @@ export function CardBack({
           </div>
 
           <div className="mt-auto">
-            <div className="laser text-[3.3cqw] font-semibold opacity-70">{l.looksFor}</div>
+            <div className="laser text-[3.3cqw] font-semibold opacity-70">{example ? l.looksFor : l.found}</div>
             <div className="laser mt-[0.8cqw] text-[3.9cqw] leading-snug font-semibold">✕ {failure}</div>
+            {!example && <div className="laser mt-[1.2cqw] text-[3.3cqw] leading-snug opacity-80">✓ {l.gateway}</div>}
+            {example && <div className="laser mt-[1.2cqw] font-mono text-[2.7cqw] tracking-[0.12em] uppercase opacity-60">{l.illustrativeNote}</div>}
             {openButton}
           </div>
         </div>
@@ -268,10 +267,8 @@ export function CardBack({
       <div className="card-back-shade pointer-events-none absolute inset-0" />
 
       <div className="relative flex h-full flex-col py-[8cqw] pr-[7cqw] pl-[27cqw]">
-        <div className="laser font-mono text-[3.6cqw] tracking-[0.14em] uppercase opacity-80">{l.report} · {episode}</div>
-        <div className="laser mt-[1.5cqw] text-[5.2cqw] leading-tight font-semibold">
-          {agent} {version}
-        </div>
+        <div className="laser font-mono text-[3.6cqw] tracking-[0.14em] uppercase opacity-80">{l.report} · {example ? l.illustrative : episode}</div>
+        <div className="laser mt-[1.5cqw] text-[5.2cqw] leading-tight font-semibold">{agent || discipline.name}</div>
 
         <div className="mt-[5cqw] grid grid-cols-2 gap-[3cqw]">
           <div>
@@ -292,12 +289,13 @@ export function CardBack({
         <div className="mt-[4cqw]">
           <div className="laser text-[3.2cqw] tracking-[0.16em] uppercase opacity-65">{l.rule}</div>
           <div className="laser mt-[0.8cqw] text-[4.4cqw] leading-snug font-semibold">✓ {rule}</div>
+          {!example && <div className="laser mt-[0.8cqw] text-[3.3cqw] leading-snug opacity-75">{l.gateway}</div>}
         </div>
 
         <div className="mt-auto">
           <div className="laser text-[3.2cqw] tracking-[0.16em] uppercase opacity-65">{l.riskPerMillion}</div>
-          <div className="laser font-mono text-[5.4cqw] font-semibold">{riskPerMillion} {l.cur}</div>
-          {example && <div className="laser mt-[0.6cqw] font-mono text-[2.6cqw] tracking-[0.18em] uppercase opacity-60">{l.exampleFigures}</div>}
+          <div className="laser font-mono text-[5.4cqw] font-semibold">{example ? "—" : `${riskPerMillion} ${l.cur}`}</div>
+          {example && <div className="laser mt-[0.6cqw] font-mono text-[2.6cqw] tracking-[0.18em] uppercase opacity-60">{l.illustrativeNote}</div>}
           {openButton}
         </div>
       </div>

@@ -16,7 +16,8 @@
   --sky: #60a5fa;
   --ice: #1b2b4f;
   --gold: #60a5fa;
-  --danger: #b48cff;
+  --danger: #ffffff;
+  --on-danger: #0b1120;
   --ok: #22c55e;
   --warn: #f59e0b;
   --paper: #ffffff;
@@ -41,7 +42,8 @@
   --on-accent: #ffffff;
   --ice: #dbeafe;
   --gold: #2563ff;
-  --danger: #7c3aed;
+  --danger: #0b1120;
+  --on-danger: #ffffff;
   --ok: #16a34a;
   --shadow: 11, 17, 32;
   --sk: 0.32;
@@ -66,6 +68,7 @@
   --color-warn: var(--warn);
   --color-gold: var(--gold);
   --color-danger: var(--danger);
+  --color-on-danger: var(--on-danger);
   --color-ok: var(--ok);
   --color-paper: var(--paper);
   --color-ink: var(--ink);
@@ -284,8 +287,8 @@ body {
   mask-size: 120px 120px;
 }
 .card-stamp-red {
-  color: #c9b0ff;
-  border-color: #c9b0ff;
+  color: #e2e8f0;
+  border-color: #e2e8f0;
 }
 .card-stamp-ink {
   color: #93c5fd;
@@ -293,8 +296,8 @@ body {
 }
 .card-platinum .card-stamp-red,
 .card-gold .card-stamp-red {
-  color: #6d28d9;
-  border-color: #6d28d9;
+  color: #0b1120;
+  border-color: #0b1120;
 }
 .card-platinum .card-stamp-ink,
 .card-gold .card-stamp-ink {
@@ -462,3 +465,100 @@ footer.zone-light.zone-fade-top {
   --fade: 200px;
 }
 
+
+/* Hero "night": near-black field, overhead light, cursor-revealed dot grid */
+.hero-night {
+  background:
+    radial-gradient(ellipse 70% 55% at 50% -12%, rgba(96, 165, 250, 0.2), transparent 62%),
+    radial-gradient(ellipse 40% 30% at 50% -4%, rgba(199, 220, 255, 0.12), transparent 70%),
+    linear-gradient(180deg, #03050a 0%, #05070e 55%, var(--bg) 100%);
+}
+.hero-beam {
+  position: absolute;
+  top: -10%;
+  left: 50%;
+  width: 1px;
+  height: 70%;
+  background: linear-gradient(180deg, rgba(199, 220, 255, 0.5), transparent);
+  transform-origin: top center;
+  filter: blur(0.4px);
+  pointer-events: none;
+}
+.hero-grid {
+  --mx: 50%;
+  --my: 42%;
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background-image: radial-gradient(circle, rgba(199, 220, 255, 0.55) 1px, transparent 1.5px);
+  background-size: 26px 26px;
+  mask-image: radial-gradient(380px circle at var(--mx) var(--my), #000 0%, rgba(0, 0, 0, 0.35) 45%, transparent 100%);
+  transition: opacity 0.6s ease;
+}
+.hero-grid-static {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background-image: radial-gradient(circle, rgba(199, 220, 255, 0.1) 1px, transparent 1.4px);
+  background-size: 26px 26px;
+  mask-image: radial-gradient(ellipse 55% 45% at 50% 38%, #000 0%, transparent 100%);
+}
+.hero-ink {
+  background: linear-gradient(180deg, #ffffff 35%, rgba(226, 232, 240, 0.62) 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+.hero-horizon {
+  background: linear-gradient(90deg, transparent, rgba(96, 165, 250, 0.7) 30%, rgba(219, 234, 254, 0.95) 50%, rgba(96, 165, 250, 0.7) 70%, transparent);
+}
+.hero-badge-dot {
+  animation: hero-dot 2.6s cubic-bezier(0.45, 0, 0.55, 1) infinite;
+}
+@keyframes hero-dot {
+  0%,
+  100% {
+    box-shadow: 0 0 0 0 rgba(96, 165, 250, 0.55);
+  }
+  60% {
+    box-shadow: 0 0 0 6px rgba(96, 165, 250, 0);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .hero-badge-dot {
+    animation: none;
+  }
+}
+
+/* Sections in the "night" look: dip from the page graphite into near-black and back */
+.night-field {
+  background: linear-gradient(180deg, var(--bg) 0%, #05070e 14%, #05070e 86%, var(--bg) 100%);
+}
+
+/* Warp-like terminal in "El problema" */
+.term-line {
+  animation: term-in 0.28s ease-out both;
+}
+@keyframes term-in {
+  from {
+    opacity: 0;
+    transform: translateY(4px);
+  }
+}
+.term-caret {
+  animation: term-caret 1.05s steps(1) infinite;
+}
+@keyframes term-caret {
+  50% {
+    opacity: 0;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .term-line,
+  .term-caret {
+    animation: none;
+  }
+}
+.title-accent.title-silver {
+  background-image: linear-gradient(100deg, #f8fafc 0%, #94a3b8 55%, #e2e8f0 100%);
+}

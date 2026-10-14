@@ -3,7 +3,9 @@
 import { useRef, useState } from "react";
 import Image from "next/image";
 import { motion, useReducedMotion, useScroll, useTransform } from "motion/react";
+import { realCase } from "@/lib/evidence";
 import type { Lang } from "@/lib/i18n";
+import { SpotlightGrid, useSpotlight } from "./Night";
 
 const PAGES = 7;
 const FILE = "axiomic-informe-muestra.pdf";
@@ -30,7 +32,7 @@ const copy = {
     zoomIn: "Acercar",
     zoomOut: "Alejar",
     thumbs: "Miniaturas",
-    note: "Documento de muestra con dinero simulado · medición 09",
+    note: `Documento de muestra · cliente ilustrativo · cifras de la medición 09 (${realCase.model}, ${realCase.profile.es}) · dinero simulado`,
   },
   en: {
     eyebrow: "What you get",
@@ -48,7 +50,7 @@ const copy = {
     zoomIn: "Zoom in",
     zoomOut: "Zoom out",
     thumbs: "Thumbnails",
-    note: "Sample document with simulated money · measurement 09",
+    note: `Sample document · illustrative client · figures from measurement 09 (${realCase.model}, ${realCase.profile.en}) · simulated money`,
   },
 } satisfies Record<Lang, unknown>;
 
@@ -69,6 +71,7 @@ const ICON = {
 export function Report({ lang }: { lang: Lang }) {
   const t = copy[lang];
   const reduce = useReducedMotion();
+  const spot = useSpotlight();
 
   const viewer = useRef<HTMLDivElement>(null);
   const { scrollYProgress: rising } = useScroll({ target: viewer, offset: ["start end", "start 0.2"] });
@@ -117,20 +120,21 @@ export function Report({ lang }: { lang: Lang }) {
     "flex h-8 w-8 items-center justify-center rounded-[8px] text-muted transition-[background-color,color,transform] duration-150 ease-out hover:bg-white/[0.06] hover:text-fg active:scale-[0.94] disabled:pointer-events-none disabled:opacity-30";
 
   return (
-    <section id="informe" className="scroll-mt-24 py-24 sm:py-32">
-      <div className="mx-auto max-w-[1400px] px-6 lg:px-14">
+    <section id="informe" onPointerMove={spot.onPointerMove} onPointerLeave={spot.onPointerLeave} className="night-field relative scroll-mt-24 overflow-x-clip py-24 sm:py-32">
+      <SpotlightGrid gridRef={spot.grid} />
+      <div aria-hidden className="pointer-events-none absolute top-[62%] left-1/2 h-[600px] w-[1200px] max-w-[110vw] -translate-x-1/2 -translate-y-1/2 rounded-full bg-[radial-gradient(closest-side,rgba(255,255,255,0.05),transparent)] blur-2xl" />
+      <div className="relative mx-auto max-w-[1400px] px-6 lg:px-14">
         <div className="grid grid-cols-1 gap-8 lg:grid-cols-12 lg:items-end">
           <div className="min-w-0 lg:col-span-7">
-            <p className="text-[15px] font-semibold text-accent">{t.eyebrow}</p>
-            <h2 className="mt-3 text-[36px] leading-[1.06] font-semibold tracking-[-0.045em] text-balance sm:text-[52px]">{t.title}</h2>
+            <h2 className="hero-ink text-[36px] leading-[1.06] font-semibold tracking-[-0.045em] text-balance sm:text-[52px]">{t.title}</h2>
             <p className="mt-5 max-w-[560px] text-[18px] leading-[1.5] text-muted">{t.lead}</p>
           </div>
           <div className="flex flex-wrap gap-3 lg:col-span-5 lg:justify-end">
-            <a href={pdf} download className={`${btn} inline-flex items-center gap-2 bg-accent text-on-accent shadow-[0_10px_30px_-10px_rgba(37,99,255,0.36)] hover:bg-accent-hi`}>
+            <a href={pdf} download className={`${btn} inline-flex items-center gap-2 bg-accent text-on-accent shadow-[inset_0_1px_0_rgba(255,255,255,0.3),0_0_0_1px_rgba(96,165,250,0.45),0_14px_44px_-12px_rgba(61,123,255,0.75)] hover:bg-accent-hi`}>
               <Icon d={ICON.download} />
               {t.download}
             </a>
-            <a href={pdf} target="_blank" rel="noopener" className={`${btn} inline-flex items-center gap-2 border border-edge bg-panel text-fg hover:border-faint`}>
+            <a href={pdf} target="_blank" rel="noopener" className={`${btn} inline-flex items-center gap-2 border border-white/10 bg-white/[0.04] text-fg backdrop-blur-md hover:border-white/20 hover:bg-white/[0.08]`}>
               <Icon d={ICON.external} />
               {t.open}
             </a>
@@ -141,19 +145,19 @@ export function Report({ lang }: { lang: Lang }) {
         <motion.div
           ref={viewer}
           style={reduce ? undefined : { rotateX: tilt, scale: grow, y: rise, opacity: fade, transformOrigin: "50% 0%" }}
-          className="mt-12 overflow-hidden rounded-[14px] bg-panel shadow-[0_1px_2px_rgba(11,17,32,0.08),0_50px_100px_-44px_rgba(11,17,32,0.55)] ring-1 ring-edge"
+          className="mt-12 overflow-hidden rounded-[14px] bg-[#0a0d14] shadow-[inset_0_1px_0_rgba(255,255,255,0.08),0_50px_120px_-40px_rgba(0,0,0,0.95)] ring-1 ring-white/[0.09]"
         >
-          <div className="flex h-12 items-center gap-2 border-b border-edge bg-panel-2/70 px-3 sm:px-4">
+          <div className="flex h-12 items-center gap-2 border-b border-white/[0.06] bg-[#0d1119] px-3 sm:px-4">
             <span className="mr-1 hidden gap-1.5 sm:flex">
-              <span className="h-3 w-3 rounded-full bg-[#ff5f57]" />
-              <span className="h-3 w-3 rounded-full bg-[#febc2e]" />
-              <span className="h-3 w-3 rounded-full bg-[#28c840]" />
+              <span className="h-3 w-3 rounded-full bg-white/[0.13]" />
+              <span className="h-3 w-3 rounded-full bg-white/[0.13]" />
+              <span className="h-3 w-3 rounded-full bg-white/[0.13]" />
             </span>
             <button type="button" onClick={() => setRail((r) => !r)} aria-label={t.thumbs} aria-pressed={rail} className={`${tool} hidden lg:flex ${rail ? "text-fg" : ""}`}>
               <Icon d={ICON.sidebar} />
             </button>
             <span className="flex min-w-0 items-center gap-2 pl-1">
-              <span className="text-danger">
+              <span className="text-white/50">
                 <Icon d={ICON.pdf} className="h-4 w-4" />
               </span>
               <span className="truncate text-[14px] font-medium text-fg">{FILE}</span>
@@ -168,13 +172,13 @@ export function Report({ lang }: { lang: Lang }) {
                 <button type="button" onClick={() => setZoom((z) => z + 1)} disabled={zoom === ZOOM.length - 1} aria-label={t.zoomIn} className={tool}>
                   <Icon d={ICON.plus} />
                 </button>
-                <span className="mx-2 h-5 w-px bg-edge" />
+                <span className="mx-2 h-5 w-px bg-white/10" />
               </span>
               <span className="px-1 text-[13px] whitespace-nowrap text-muted tabular-nums">
                 <span className="hidden sm:inline">{t.page} </span>
                 <span className="text-fg">{current}</span> {t.of} {PAGES}
               </span>
-              <span className="mx-2 h-5 w-px bg-edge" />
+              <span className="mx-2 h-5 w-px bg-white/10" />
               <a href={pdf} download aria-label={t.download} className={tool}>
                 <Icon d={ICON.download} />
               </a>
@@ -183,17 +187,17 @@ export function Report({ lang }: { lang: Lang }) {
 
           <div className="flex sm:h-[72vh] sm:max-h-[900px] sm:min-h-[480px]">
             {rail && (
-              <nav ref={railRef} aria-label={t.thumbs} className="relative hidden w-[148px] shrink-0 overflow-y-auto border-r border-edge bg-panel px-5 py-5 lg:block">
+              <nav ref={railRef} aria-label={t.thumbs} className="relative hidden w-[148px] shrink-0 overflow-y-auto border-r border-white/[0.06] bg-[#0b0e16] px-5 py-5 lg:block">
                 <ol className="space-y-4">
                   {Array.from({ length: PAGES }, (_, i) => i + 1).map((n) => (
                     <li key={n}>
                       <button type="button" onClick={() => goTo(n)} aria-current={n === current ? "page" : undefined} className="group block w-full text-center">
                         <span
-                          className={`relative block aspect-[1/1.414] overflow-hidden rounded-[2px] bg-white ring-offset-2 ring-offset-panel transition-[box-shadow,opacity] duration-200 ${
-                            n === current ? "opacity-100 ring-2 ring-accent" : "opacity-60 ring-1 ring-edge group-hover:opacity-90"
+                          className={`relative block aspect-[1/1.414] overflow-hidden rounded-[2px] bg-white ring-offset-2 ring-offset-[#0b0e16] transition-[box-shadow,opacity] duration-200 ${
+                            n === current ? "opacity-100 ring-2 ring-accent" : "opacity-50 ring-1 ring-white/10 group-hover:opacity-90"
                           }`}
                         >
-                          <Image src={src(n)} alt="" fill sizes="110px" className="object-cover" />
+                          <Image src={src(n)} alt="" width={110} height={156} className="h-full w-full object-cover" />
                         </span>
                         <span className={`mt-1.5 block text-[12px] tabular-nums ${n === current ? "text-accent" : "text-faint"}`}>{n}</span>
                       </button>
@@ -203,7 +207,7 @@ export function Report({ lang }: { lang: Lang }) {
               </nav>
             )}
 
-            <div ref={scroller} onScroll={onScroll} className="relative flex min-w-0 flex-1 snap-x snap-mandatory gap-4 overflow-x-auto bg-bg px-[9%] py-6 sm:block sm:snap-none sm:overflow-x-hidden sm:overflow-y-auto sm:px-8 sm:py-8">
+            <div ref={scroller} onScroll={onScroll} className="relative flex min-w-0 flex-1 snap-x snap-mandatory gap-4 overflow-x-auto bg-[#06080f] px-[9%] py-6 sm:block sm:snap-none sm:overflow-x-hidden sm:overflow-y-auto sm:px-8 sm:py-8">
               <div className="contents transition-[max-width] duration-300 ease-out sm:mx-auto sm:block sm:space-y-8" style={{ maxWidth: ZOOM[zoom].w }}>
                 {Array.from({ length: PAGES }, (_, i) => i + 1).map((n) => (
                   <div

@@ -1,9 +1,33 @@
-import { contactEmail } from "@/lib/content";
+import { contactInbox } from "@/lib/content";
+
+// Per-IP rate limit: 5 submissions per 10 minutes, kept in memory per server instance.
+// Pair it with Cloudflare Turnstile or a Vercel firewall rule for a real deployment.
+const WINDOW_MS = 10 * 60 * 1000;
+const MAX_PER_WINDOW = 5;
+const hits = new Map<string, number[]>();
+
+function limited(ip: string) {
+  const now = Date.now();
+  const recent = (hits.get(ip) ?? []).filter((t) => now - t < WINDOW_MS);
+  if (recent.length >= MAX_PER_WINDOW) {
+    hits.set(ip, recent);
+    return true;
+  }
+  recent.push(now);
+  hits.set(ip, recent);
+  if (hits.size > 5000) {
+    for (const [k, v] of hits) if (v.every((t) => now - t >= WINDOW_MS)) hits.delete(k);
+  }
+  return false;
+}
 
 const clean = (v: unknown, max = 200) => (typeof v === "string" ? v.trim().slice(0, max) : "");
 const escape = (s: string) => s.replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" })[c]!);
 
 export async function POST(request: Request) {
+  const ip = request.headers.get("x-forwarded-for")?.split(",")[0]?.trim() || request.headers.get("x-real-ip") || "unknown";
+  if (limited(ip)) return Response.json({ error: "rate_limited" }, { status: 429 });
+
   let data: Record<string, unknown>;
   try {
     data = await request.json();
@@ -37,7 +61,7 @@ export async function POST(request: Request) {
     headers: { Authorization: `Bearer ${key}`, "Content-Type": "application/json" },
     body: JSON.stringify({
       from: process.env.CONTACT_FROM_EMAIL ?? "Axiomic <onboarding@resend.dev>",
-      to: [process.env.CONTACT_TO_EMAIL ?? contactEmail],
+      to: [process.env.CONTACT_TO_EMAIL ?? contactInbox],
       reply_to: lead.correo,
       subject: `${lead.tipo === "gateway" ? "Gateway · acceso anticipado" : "Evaluación"} · ${lead.empresa}`,
       text: lines.join("\n"),

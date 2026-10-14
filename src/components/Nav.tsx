@@ -99,8 +99,8 @@ export function Nav({ lang, alt }: { lang: Lang; alt: string }) {
         }`}
       >
         <Link href={home} className="group flex items-center gap-2.5 text-[19px] font-semibold tracking-[-0.03em] text-white" onClick={() => setOpen(false)}>
-          <span className="flex h-9 w-9 items-center justify-center rounded-[11px] bg-white shadow-[0_0_0_1px_rgba(255,255,255,0.4),0_6px_20px_-6px_rgba(61,123,255,0.7)] transition-transform duration-300 ease-out group-hover:rotate-[-8deg] group-active:scale-95">
-            <LogoMark className="h-[26px] w-[26px]" />
+          <span className="flex h-9 w-9 items-center justify-center drop-shadow-[0_0_12px_rgba(61,123,255,0.45)] transition-transform duration-300 ease-out group-hover:rotate-[-8deg] group-active:scale-95">
+            <LogoMark onDark className="h-[30px] w-[30px]" />
           </span>
           axiomic
         </Link>
